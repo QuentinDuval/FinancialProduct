@@ -31,6 +31,11 @@ mds2 = indexes [(FI "USD/EUR"   , 2.07)
                ,(FI "EURIBOR3M" , 1.22)]
 
 
+-- TODO - Add dates
+-- TODO - Modify the IndexMonad to have Map Index (Map Date Double) and use lower bound
+-- TODO - Build complex products on top of it (like a bond)
+
+
 -- | Run tests
 
 main :: IO ()

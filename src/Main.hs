@@ -31,7 +31,8 @@ mds2 = indexes [(FI "USD/EUR"   , 2.07)
                ,(FI "EURIBOR3M" , 1.22)]
 
 
--- TODO - Add dates
+-- TODO - Add dates to the flows
+-- TODO - Add the dates to the index as well -> the dates are not necessarily correlated with flow dates
 -- TODO - Modify the IndexMonad to have Map Index (Map Date Double) and use lower bound
 -- TODO - Build complex products on top of it (like a bond)
 -- TODO - Bring parallelism in the monad as well

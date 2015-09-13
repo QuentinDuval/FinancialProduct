@@ -10,8 +10,8 @@ data FinIndex = FI String
 
 data Indexes = Indexes { indexMap :: M.Map FinIndex Double }
 
-indexes :: [(FinIndex, Double)] -> Indexes
-indexes = Indexes . M.fromList
+indexes :: (Foldable f) => f (FinIndex, Double) -> Indexes
+indexes = Indexes . foldr (uncurry M.insert) M.empty
 
 
 -- | Analog to a simple reader monad to evaluate the deals and read the indices
@@ -22,12 +22,12 @@ instance Functor IndexMonad where
     fmap f a = IndexMonad $ \m -> f (runIndex a m)
 
 instance Applicative IndexMonad where
-    pure a = IndexMonad $ const a
+    pure a  = IndexMonad $ const a
     f <*> a = IndexMonad $ \m -> runIndex f m (runIndex a m)
 
 instance Monad IndexMonad where
-    return = pure
-    (IndexMonad a) >>= f = IndexMonad $ \m -> runIndex (f (a m)) m
+    return  = pure
+    a >>= f = IndexMonad $ \m -> runIndex (f (runIndex a m)) m
 
 
 -- | Useful type aliases
@@ -36,7 +36,7 @@ type Predicate = IndexMonad Bool
 type Quantity  = IndexMonad Double
 
 
--- | Class of what it is possible to evaluate
+-- | Evaluation the value of an index inside the monad
 
 evalIndex :: FinIndex -> Quantity
 evalIndex i = IndexMonad $ \m -> M.findWithDefault 0 i (indexMap m)

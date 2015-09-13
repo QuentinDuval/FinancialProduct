@@ -1,17 +1,3 @@
------------------------------------------------------------------------------
---
--- Module      :  IndexMonad
--- Copyright   :
--- License     :  AllRightsReserved
---
--- Maintainer  :
--- Stability   :
--- Portability :
---
--- |
---
------------------------------------------------------------------------------
-
 module IndexMonad where
 
 import qualified Data.Map as M

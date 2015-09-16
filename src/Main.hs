@@ -36,9 +36,12 @@ mds2 = indexes [(FI "USD/EUR"   , 2.07)
 -- * Do not add fixes dates but variable dates (t1, t2, etc.)
 -- * Modify the IndexMonad to have Map Index (Map Date Double) and use lower bound
 -- => With this you get the description of an instrument that is not time dependent
--- => If you fix the time variables, you get financial product
+-- => If you fix the time variables + some quantities, you get financial product
 -- => Then if you evaluate it with some indices, you get the flows
+
 -- Summary: the instrument is like an electrical circuit, with all values coming from wires
+-- Bring some values on the wire makes the product a bit more concrete every time.
+-- TODO: Add a "fixing" function that just maps the "var (\r -> e)" to "const (var r)"
 
 -- TODO - Build complex products on top of it
 -- * Via factories that construct pre-packaged instrument (like a bond)

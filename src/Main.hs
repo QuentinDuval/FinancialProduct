@@ -38,6 +38,7 @@ mds2 = indexes [(FI "USD/EUR"   , 2.07)
 -- => With this you get the description of an instrument that is not time dependent
 -- => If you fix the time variables, you get financial product
 -- => Then if you evaluate it with some indices, you get the flows
+-- Summary: the instrument is like an electrical circuit, with all values coming from wires
 
 -- TODO - Build complex products on top of it
 -- * Via factories that construct pre-packaged instrument (like a bond)

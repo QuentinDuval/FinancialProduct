@@ -4,6 +4,7 @@ import Control.Applicative
 import Control.Arrow
 import Control.Monad
 import Control.Lens
+import Data.Time
 
 import Flow
 import IndexMonad
@@ -13,7 +14,7 @@ import IndexMonad
 -- | Vocabulary to describe financial products
 
 data Product
-    = Tangible  String              -- TODO: Add dates
+    = Tangible  FlowDate String
     | Scale     Quantity Product
     | AllOf     [Product]
     | IfThen    Predicate Product
@@ -24,8 +25,8 @@ cst = return . realToFrac
 var :: String -> Quantity
 var = evalIndex . FI
 
-trn :: Double -> String -> Product
-trn qty instr = scale (pure qty) (Tangible instr)
+trn :: Double -> FlowDate -> String -> Product
+trn qty date instr = scale (pure qty) (Tangible date instr)
 
 scale :: Quantity -> Product -> Product
 scale = Scale
@@ -38,7 +39,7 @@ choice p a b = AllOf [IfThen p a, IfThen (not <$> p) b]
 -- | Evaluation of the production of financial products
 
 evalProduct :: Product -> IndexMonad [Flow]
-evalProduct (Tangible s)  = return [Flow 1 s]
+evalProduct (Tangible d s)  = return [Flow 1 d s]
 evalProduct (AllOf ps)    = concat <$> mapM evalProduct ps
 evalProduct (IfThen p f)  = do
     v <- p

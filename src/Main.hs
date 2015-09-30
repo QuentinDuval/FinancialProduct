@@ -3,6 +3,8 @@ module Main (
 ) where
 
 
+import qualified Bond
+import Data.Time
 import FinProduct
 import IndexMonad
 import MonadUtils
@@ -10,13 +12,13 @@ import MonadUtils
 
 -- | A simple test product
 
-prod :: Product
-prod =
+prod :: UTCTime -> Product
+prod t =
     scale (var "USD/EUR") $
-        AllOf [scale   (var "EURIBOR3M" * cst 0.33)    (trn 120 "EUR"),
-               scale   (var "GOLD" + var "USD/EUR")    (trn 0.9 "USD"),
-               choice  (var "GOLD" .>. cst 10.0)       (trn 12 "GOLD") (trn 3 "SILV"),
-               choice  (var "GOLD" .<. var "USD/EUR")  (trn 17 "GOLD") (trn 5 "SILV")]
+        AllOf [scale   (var "EURIBOR3M" * cst 0.33)    (trn 120 t "EUR"),
+               scale   (var "GOLD" + var "USD/EUR")    (trn 0.9 t "USD"),
+               choice  (var "GOLD" .>. cst 10.0)       (trn 12 t "GOLD") (trn 3 t "SILV"),
+               choice  (var "GOLD" .<. var "USD/EUR")  (trn 17 t "GOLD") (trn 5 t "SILV")]
 
 
 -- | Two test market data sets
@@ -54,6 +56,7 @@ mds2 = indexes [(FI "USD/EUR"   , 2.07)
 
 main :: IO ()
 main = do
-    print $ runIndex (evalProduct prod) mds1
-    print $ runIndex (evalProduct prod) mds2
+    p <- prod <$> getCurrentTime
+    print $ runIndex (evalProduct p) mds1
+    print $ runIndex (evalProduct p) mds2
 

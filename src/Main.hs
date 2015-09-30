@@ -23,9 +23,15 @@ prod1 t =
 
 prod2 :: UTCTime -> FinProduct
 prod2 t =
-    let bi = Bond.BondInfo { Bond.nominal = 10, Bond.currency = "EUR", Bond.rate = 0.1 }
-        pi = Bond.PeriodInfo { Bond.startDate = t, Bond.gap = 10, Bond.periodCount = 3 }
-    in Bond.buy bi pi
+    let periods = Bond.PeriodInfo {
+            Bond.startDate = t,
+            Bond.gap = 10,
+            Bond.periodCount = 3 }
+        bond = Bond.BondInfo {
+            Bond.nominal = 10,
+            Bond.currency = "EUR",
+            Bond.rate = var "EURIBOR3M" * var "USD/EUR" * cst 0.05 }
+    in Bond.buy bond periods
 
 
 -- | Two test market data sets

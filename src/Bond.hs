@@ -19,9 +19,9 @@ import IndexMonad
 
 data BondInfo = BondInfo {
       nominal       :: Double
-    , rate          :: Double
+    , rate          :: Quantity
     , currency      :: String
-    } deriving(Show, Eq, Ord)
+    }
 
 data PeriodInfo = PeriodInfo {
       startDate     :: FlowDate
@@ -52,7 +52,7 @@ create :: BondInfo -> PeriodInfo -> FinProduct
 create BondInfo{..} p =
     let initFlow = trn nominal (startDate p) currency
         lastFlow = trn (-1 * nominal) (lastDate p) currency
-        midFlows = [trn (-1 * nominal * rate) d currency | d <- midDates p]
+        midFlows = scale rate <$> [trn (-1 * nominal) d currency | d <- midDates p]
     in initFlow <> mconcat midFlows <> lastFlow
 
 

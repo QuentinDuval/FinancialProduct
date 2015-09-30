@@ -33,7 +33,7 @@ scale :: Quantity -> Product -> Product
 scale = Scale
 
 choice :: Predicate -> Product -> Product -> Product
-choice p a b = AllOf [IfThen p a, IfThen (not <$> p) b]
+choice p a b = mconcat [IfThen p a, IfThen (not <$> p) b]
 
 instance Monoid Product where
     mempty = Empty

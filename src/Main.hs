@@ -60,8 +60,8 @@ mds2 = indexes [(FI "USD/EUR"   , 2.07)
 main :: IO ()
 main = do
     t <- getCurrentTime
-    let [p1, p2] = [prod1, prod2] <*> [t]
-    print $ runIndex (evalProduct p1) mds1
-    print $ runIndex (evalProduct p1) mds2
-    print $ runIndex (evalProduct p2) mds1
+    mapM_ print $ do
+        prod <- [prod1, prod2] <*> [t]
+        mds  <- [mds1, mds2]
+        return $ runIndex (evalProduct prod) mds
 

@@ -10,16 +10,22 @@ import IndexMonad
 import MonadUtils
 
 
--- | A simple test product
+-- | Simple test products
 
-prod :: UTCTime -> Product
-prod t =
+prod1 :: UTCTime -> FinProduct
+prod1 t =
     scale (var "USD/EUR") $
         mconcat [
             scale   (var "EURIBOR3M" * cst 0.33)    (trn 120 t "EUR"),
             scale   (var "GOLD" + var "USD/EUR")    (trn 0.9 t "USD"),
             choice  (var "GOLD" .>. cst 10.0)       (trn 12 t "GOLD") (trn 3 t "SILV"),
             choice  (var "GOLD" .<. var "USD/EUR")  (trn 17 t "GOLD") (trn 5 t "SILV")]
+
+prod2 :: UTCTime -> FinProduct
+prod2 t =
+    let bi = Bond.BondInfo { Bond.nominal = 10, Bond.currency = "EUR", Bond.rate = 0.1 }
+        pi = Bond.PeriodInfo { Bond.startDate = t, Bond.gap = 10, Bond.periodCount = 3 }
+    in Bond.buy bi pi
 
 
 -- | Two test market data sets
@@ -57,7 +63,9 @@ mds2 = indexes [(FI "USD/EUR"   , 2.07)
 
 main :: IO ()
 main = do
-    p <- prod <$> getCurrentTime
-    print $ runIndex (evalProduct p) mds1
-    print $ runIndex (evalProduct p) mds2
+    t <- getCurrentTime
+    let [p1, p2] = [prod1, prod2] <*> [t]
+    print $ runIndex (evalProduct p1) mds1
+    print $ runIndex (evalProduct p1) mds2
+    print $ runIndex (evalProduct p2) mds1
 

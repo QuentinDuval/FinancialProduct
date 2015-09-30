@@ -13,12 +13,17 @@ import IndexMonad
 
 -- | Vocabulary to describe financial products
 
-data Product
-    = Tangible  FlowDate String
-    | Scale     Quantity Product
-    | AllOf     [Product]
-    | IfThen    Predicate Product
+newtype Instrument
+    = Instrument { instrumentLabel :: String }
+    deriving (Show, Eq, Ord)
+
+data FinProduct
+    = Tangible  FlowDate Instrument
+    | Scale     Quantity FinProduct
+    | AllOf     [FinProduct]
+    | IfThen    Predicate FinProduct
     | Empty
+
 
 cst :: (Real a) => a -> Quantity
 cst = return . realToFrac
@@ -26,16 +31,16 @@ cst = return . realToFrac
 var :: String -> Quantity
 var = evalIndex . FI
 
-trn :: Double -> FlowDate -> String -> Product
-trn qty date instr = scale (pure qty) (Tangible date instr)
+trn :: Double -> FlowDate -> String -> FinProduct
+trn qty date instr = scale (pure qty) (Tangible date (Instrument instr))
 
-scale :: Quantity -> Product -> Product
+scale :: Quantity -> FinProduct -> FinProduct
 scale = Scale
 
-choice :: Predicate -> Product -> Product -> Product
+choice :: Predicate -> FinProduct -> FinProduct -> FinProduct
 choice p a b = mconcat [IfThen p a, IfThen (not <$> p) b]
 
-instance Monoid Product where
+instance Monoid FinProduct where
     mempty = Empty
     mappend a b = AllOf [a, b]
     mconcat = AllOf
@@ -43,9 +48,9 @@ instance Monoid Product where
 
 -- | Evaluation of the production of financial products
 
-evalProduct :: Product -> IndexMonad [Flow]
+evalProduct :: FinProduct -> IndexMonad [Flow]
 evalProduct Empty           = return []
-evalProduct (Tangible d s)  = return [Flow 1 d s]
+evalProduct (Tangible d s)  = return [Flow 1 d (instrumentLabel s)]
 evalProduct (AllOf ps)      = concat <$> mapM evalProduct ps
 evalProduct (IfThen p f)    = do
     v <- p

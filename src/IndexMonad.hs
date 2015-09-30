@@ -40,3 +40,4 @@ type Quantity  = IndexMonad Double
 
 evalIndex :: FinIndex -> Quantity
 evalIndex i = IndexMonad $ \m -> M.findWithDefault 0 i (indexMap m)
+

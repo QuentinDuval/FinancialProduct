@@ -20,6 +20,7 @@ executable FinancialProduct
         FinProduct
         Flow
         IndexMonad
+        MonadUtils
     ghc-options: -ferror-spans
 
 test-suite test-FinancialProduct

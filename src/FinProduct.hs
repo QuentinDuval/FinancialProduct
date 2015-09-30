@@ -38,26 +38,6 @@ choice :: Predicate -> Product -> Product -> Product
 choice p a b = AllOf [IfThen p a, IfThen (not <$> p) b]
 
 
--- | Helper combinators
-
-(.>.), (.<.), (.==.), (./=.) :: Quantity -> Quantity -> Predicate
-(.>.)   = liftA2 (>)
-(.<.)   = liftA2 (<)
-(.==.)  = liftA2 (==)
-(./=.)  = liftA2 (/=)
-
-(.&&.), (.||.) :: Predicate -> Predicate -> Predicate
-(.&&.) = liftA2 (&&)
-(.||.) = liftA2 (&&)
-
-instance Num Quantity where
-    (+) = liftA2 (+)
-    (*) = liftA2 (*)
-    (-) = liftA2 (-)
-    abs = fmap abs
-    signum = fmap signum
-    fromInteger = cst
-
 
 -- | Evaluation of the production of financial products
 

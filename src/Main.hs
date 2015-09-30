@@ -5,6 +5,7 @@ module Main (
 
 import FinProduct
 import IndexMonad
+import MonadUtils
 
 
 -- | A simple test product

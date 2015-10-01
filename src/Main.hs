@@ -70,5 +70,5 @@ main = do
     mapM_ print $ do
         prod <- [prod1, prod2] <*> [t]
         mds  <- [mds1, mds2]
-        return $ runIndex (evalProduct prod) mds
+        return $ withMarketData mds (evalProduct prod)
 

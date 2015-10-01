@@ -1,4 +1,10 @@
-module EvalMonad where
+module EvalMonad (
+    EvalMonad,
+    Quantity,
+    Predicate,
+    withMarketData,
+    evalIndex,
+) where
 
 import Control.Monad.Identity
 import Control.Monad.Reader
@@ -11,23 +17,26 @@ import MarketData
 
 data EvalMonad a = EvalMonad { _reader :: Reader MarketData a }
 
-runIndex :: EvalMonad a -> MarketData -> a
-runIndex = runReader . _reader
+runEvaluation :: EvalMonad a -> MarketData -> a
+runEvaluation = runReader . _reader
+
+withMarketData :: MarketData -> EvalMonad a -> a
+withMarketData = flip runEvaluation
 
 evalMonad :: (MarketData -> a) -> EvalMonad a
 evalMonad f = EvalMonad . ReaderT $ Identity . f
 
 
 instance Functor EvalMonad where
-    fmap f a = evalMonad $ f . runIndex a
+    fmap f a = evalMonad $ f . runEvaluation a
 
 instance Applicative EvalMonad where
     pure a  = evalMonad $ const a
-    f <*> a = evalMonad $ \m -> runIndex f m (runIndex a m)
+    f <*> a = evalMonad $ \m -> runEvaluation f m (runEvaluation a m)
 
 instance Monad EvalMonad where
     return  = pure
-    a >>= f = evalMonad $ \m -> runIndex (f (runIndex a m)) m
+    a >>= f = evalMonad $ \m -> runEvaluation (f (runEvaluation a m)) m
 
 
 -- | Useful type aliases

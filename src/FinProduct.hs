@@ -6,8 +6,8 @@ import Control.Monad
 import Control.Lens
 import Data.Time
 
+import EvalMonad
 import Flow
-import IndexMonad
 import MarketData
 import MonadUtils
 
@@ -53,7 +53,7 @@ instance Monoid FinProduct where
 
 -- | Evaluation of the production of financial products
 
-evalProduct :: FinProduct -> IndexMonad [Flow]
+evalProduct :: FinProduct -> EvalMonad [Flow]
 evalProduct Empty           = return []
 evalProduct (Tangible d s)  = return [Flow 1 d (instrumentLabel s)]
 evalProduct (AllOf ps)      = concat <$> mapM evalProduct ps

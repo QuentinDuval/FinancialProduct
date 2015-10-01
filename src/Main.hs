@@ -5,8 +5,8 @@ module Main (
 
 import qualified Bond
 import Data.Time
+import EvalMonad
 import FinProduct
-import IndexMonad
 import MarketData
 import MonadUtils
 

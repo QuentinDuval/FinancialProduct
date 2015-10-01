@@ -20,9 +20,9 @@ executable FinancialProduct
     hs-source-dirs: src
     other-modules:
         Bond
+        EvalMonad
         FinProduct
         Flow
-        IndexMonad
         MarketData
         MonadUtils
     ghc-options: -ferror-spans

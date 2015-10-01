@@ -25,6 +25,7 @@ executable FinancialProduct
         Flow
         MarketData
         MonadUtils
+        TimeUtils
     ghc-options: -ferror-spans
 
 test-suite test-FinancialProduct

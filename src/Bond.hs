@@ -11,6 +11,7 @@ import Data.Time
 import EvalMonad
 import FinProduct
 import Flow
+import TimeUtils
 
 
 
@@ -39,14 +40,11 @@ sell bi = create bi { nominal = -1 * nominal bi }
 
 -- | Private:
 
-periodDate :: PeriodInfo -> Integer -> FlowDate
-periodDate PeriodInfo{..} n = startDate { utctDay = addDays (n * gap) (utctDay startDate) }
-
 lastDate :: PeriodInfo -> FlowDate
-lastDate p = periodDate p (periodCount p)
+lastDate PeriodInfo{..} = startDate `addDay` (gap * periodCount)
 
 midDates :: PeriodInfo -> [FlowDate]
-midDates p = [periodDate p i | i <- [1 .. periodCount p - 1]]
+midDates PeriodInfo{..} = [startDate `addDay` (gap * i) | i <- [1 .. periodCount-1]]
 
 create :: BondInfo -> PeriodInfo -> FinProduct
 create BondInfo{..} p =

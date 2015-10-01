@@ -3,8 +3,15 @@ module TimeUtils where
 import Data.Time
 
 
+
+-- | Type definitions
+
+type FinDate = UTCTime
+type Shifter = Integer
+
+
 -- | Helpers to work on UTC Time
 
-addDay :: (Integral i) => UTCTime -> i -> UTCTime
-addDay utc i = utc { utctDay = addDays (fromIntegral i) (utctDay utc) }
+addDay :: FinDate -> Shifter -> FinDate
+addDay utc shifter = utc { utctDay = addDays shifter (utctDay utc) }
 

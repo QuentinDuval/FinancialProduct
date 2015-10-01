@@ -3,15 +3,14 @@ module Flow where
 
 import Control.Lens
 import Data.Time
+import TimeUtils
 
 
 -- | Data structure to describe the production of financial products
 
-type FlowDate = UTCTime
-
 data Flow = Flow
     { _flow     :: Double
-    , _date     :: FlowDate
+    , _date     :: FinDate
     , _flowCurr :: String }
     deriving (Eq, Ord)
 

@@ -10,7 +10,7 @@ import EvalMonad
 import Flow
 import MarketData
 import MonadUtils
-
+import TimeUtils
 
 
 -- | Vocabulary to describe financial products
@@ -20,7 +20,7 @@ newtype Instrument
     deriving (Show, Eq, Ord)
 
 data FinProduct
-    = Tangible  FlowDate Instrument
+    = Tangible  FinDate Instrument
     | Scale     Quantity FinProduct
     | AllOf     [FinProduct]
     | FirstOf   [(Predicate, FinProduct)]   -- ^ First first matching predicate
@@ -33,7 +33,7 @@ cst = return . realToFrac
 var :: String -> Quantity
 var = evalIndex . FI
 
-trn :: Double -> FlowDate -> String -> FinProduct
+trn :: Double -> FinDate -> String -> FinProduct
 trn qty date instr = scale (pure qty) (Tangible date (Instrument instr))
 
 scale :: Quantity -> FinProduct -> FinProduct

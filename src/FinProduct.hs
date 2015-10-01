@@ -26,9 +26,6 @@ data FinProduct
     | Empty
 
 
-cst :: (Real a) => a -> Quantity
-cst = return . realToFrac
-
 var :: String -> FinDate -> Quantity
 var = evalIndex . FI
 

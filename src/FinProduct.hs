@@ -47,6 +47,8 @@ eitherP p a b = FirstOf [(p, a), (pure True, b)]
 
 instance Monoid FinProduct where
     mempty = Empty
+    mappend x (AllOf xs) = AllOf (x:xs)
+    mappend (AllOf xs) x = AllOf (x:xs)
     mappend a b = AllOf [a, b]
     mconcat = AllOf
 

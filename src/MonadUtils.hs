@@ -28,11 +28,12 @@ instance (Monad m, Num a) => Num (m a) where
     signum = fmap signum
     fromInteger = return . fromInteger
 
+
 cst :: (Applicative m, Real a, Fractional b) => a -> m b
 cst = pure . realToFrac
 
 
--- | Helpful algorithms to work on monad values
+-- | Helpful algorithms to work on monadic values
 
 findM :: Monad m => (a -> m Bool) -> [a] -> m (Maybe a)
 findM _ []      = return Nothing

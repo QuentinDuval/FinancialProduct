@@ -22,6 +22,7 @@ executable FinancialProduct
         FinProduct
         Flow
         IndexMonad
+        MarketData
         MonadUtils
     ghc-options: -ferror-spans
 

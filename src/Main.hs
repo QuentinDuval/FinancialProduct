@@ -7,6 +7,7 @@ import qualified Bond
 import Data.Time
 import FinProduct
 import IndexMonad
+import MarketData
 import MonadUtils
 
 
@@ -36,12 +37,12 @@ prod2 t =
 
 -- | Two test market data sets
 
-mds1 :: Indexes
+mds1 :: MarketData
 mds1 = indexes [(FI "USD/EUR"   , 2.35)
                ,(FI "GOLD"      , 15.8)
                ,(FI "EURIBOR3M" , 0.98)]
 
-mds2 :: Indexes
+mds2 :: MarketData
 mds2 = indexes [(FI "USD/EUR"   , 2.07)
                ,(FI "GOLD"      , 1.58)
                ,(FI "EURIBOR3M" , 1.22)]

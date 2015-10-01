@@ -48,13 +48,14 @@ mds2 = indexes [(FI "USD/EUR"   , 2.07)
                ,(FI "EURIBOR3M" , 1.22)]
 
 
+-- TODO: The description of the financial product is too entangled with the monad
+-- In fact, we do not need the monad to contain the market data, but just to encapsulate the notion of observable?
+
 -- TODO - Add dates to the indexes as well (not necessarily correlated with the dates of the flows)
 -- Find a way to add the dates for indices:
 -- * A map String -> (UTCTime -> Double) might work (but does not allow side effects)
 -- * Then to do a simulation, do provide several MarketData generated separately?
 -- * Have a similar map for the volatilities?
-
--- TODO: The description of the financial product is too entangled with the monad?
 
 -- TODO: Add a "fixing" function that just maps the "var (\r -> e)" to "const (var r)"
 -- => somehow we could transform the product given some indices

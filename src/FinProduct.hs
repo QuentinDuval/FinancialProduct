@@ -62,10 +62,10 @@ evalProduct (AllOf ps)      = concat <$> mapM evalProduct ps
 evalProduct (FirstOf ps)    = do
     p <- findM fst ps
     maybe (return []) (evalProduct . snd) p
-evalProduct (Scale q f)     = do
-    v <- q
+evalProduct (Scale qty f)   = do
+    val <- qty
     fs <- evalProduct f
-    return $ over flow (*v) <$> fs
+    return $ over flow (* val) <$> fs
 
 
 

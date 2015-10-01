@@ -9,6 +9,7 @@ import Data.Time
 import Flow
 import IndexMonad
 import MarketData
+import MonadUtils
 
 
 
@@ -22,7 +23,7 @@ data FinProduct
     = Tangible  FlowDate Instrument
     | Scale     Quantity FinProduct
     | AllOf     [FinProduct]
-    | IfThen    Predicate FinProduct
+    | FirstOf   [(Predicate, FinProduct)]   -- ^ First first matching predicate
     | Empty
 
 
@@ -38,8 +39,11 @@ trn qty date instr = scale (pure qty) (Tangible date (Instrument instr))
 scale :: Quantity -> FinProduct -> FinProduct
 scale = Scale
 
-choice :: Predicate -> FinProduct -> FinProduct -> FinProduct
-choice p a b = mconcat [IfThen p a, IfThen (not <$> p) b]
+ifThen :: Predicate -> FinProduct -> FinProduct
+ifThen p a = eitherP p a Empty
+
+eitherP :: Predicate -> FinProduct -> FinProduct -> FinProduct
+eitherP p a b = FirstOf [(p, a), (pure True, b)]
 
 instance Monoid FinProduct where
     mempty = Empty
@@ -53,10 +57,9 @@ evalProduct :: FinProduct -> IndexMonad [Flow]
 evalProduct Empty           = return []
 evalProduct (Tangible d s)  = return [Flow 1 d (instrumentLabel s)]
 evalProduct (AllOf ps)      = concat <$> mapM evalProduct ps
-evalProduct (IfThen p f)    = do
-    v <- p
-    if v then evalProduct f
-         else return []
+evalProduct (FirstOf ps)    = do
+    p <- findM fst ps
+    maybe (return []) (evalProduct . snd) p
 evalProduct (Scale q f)     = do
     v <- q
     fs <- evalProduct f

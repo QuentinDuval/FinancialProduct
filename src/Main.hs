@@ -19,8 +19,8 @@ prod1 t =
         mconcat [
             scale   (var "EURIBOR3M" * cst 0.33)    (trn 120 t "EUR"),
             scale   (var "GOLD" + var "USD/EUR")    (trn 0.9 t "USD"),
-            choice  (var "GOLD" .>. cst 10.0)       (trn 12 t "GOLD") (trn 3 t "SILV"),
-            choice  (var "GOLD" .<. var "USD/EUR")  (trn 17 t "GOLD") (trn 5 t "SILV")]
+            eitherP (var "GOLD" .>. cst 10.0)       (trn 12 t "GOLD") (trn 3 t "SILV"),
+            eitherP (var "GOLD" .<. var "USD/EUR")  (trn 17 t "GOLD") (trn 5 t "SILV")]
 
 prod2 :: UTCTime -> FinProduct
 prod2 t =

@@ -28,3 +28,14 @@ instance (Monad m, Num a) => Num (m a) where
     signum = fmap signum
     fromInteger = return . fromInteger
 
+
+-- | Helpful algorithms to work on monad values
+
+findM :: Monad m => (a -> m Bool) -> [a] -> m (Maybe a)
+findM _ []      = return Nothing
+findM p (x:xs)  = do
+    v <- p x
+    if v then return (Just x)
+         else findM p xs
+
+

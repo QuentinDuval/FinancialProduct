@@ -49,10 +49,12 @@ mds2 = indexes [(FI "USD/EUR"   , 2.07)
 
 
 -- TODO - Add dates to the indexes as well (not necessarily correlated with the dates of the flows)
--- Find a way to add the dates for indices: maybe the map is already too concrete (Behaviors?)
+-- Find a way to add the dates for indices:
+-- * A map String -> (UTCTime -> Double) might work (but does not allow side effects)
+-- * Then to do a simulation, do provide several MarketData generated separately?
+-- * Have a similar map for the volatilities?
 
--- TODO: The description of the financial product is too entangled with the monad
--- => it will be hard to evaluate flows, or risk, or different things, based on this
+-- TODO: The description of the financial product is too entangled with the monad?
 
 -- TODO: Add a "fixing" function that just maps the "var (\r -> e)" to "const (var r)"
 -- => somehow we could transform the product given some indices

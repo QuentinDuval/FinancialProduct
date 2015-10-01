@@ -8,6 +8,7 @@ import Data.Time
 
 import Flow
 import IndexMonad
+import MarketData
 
 
 

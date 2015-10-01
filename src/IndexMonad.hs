@@ -1,5 +1,7 @@
 module IndexMonad where
 
+import Control.Monad.Identity
+import Control.Monad.Reader
 import qualified Data.Map as M
 import MarketData
 
@@ -7,18 +9,25 @@ import MarketData
 
 -- | Analog to a simple reader monad to evaluate the deals and read the indices
 
-data IndexMonad a = IndexMonad { runIndex :: MarketData -> a }
+data IndexMonad a = IndexMonad { _reader :: Reader MarketData a }
+
+runIndex :: IndexMonad a -> MarketData -> a
+runIndex = runReader . _reader
+
+indexMonad :: (MarketData -> a) -> IndexMonad a
+indexMonad f = IndexMonad . ReaderT $ Identity . f
+
 
 instance Functor IndexMonad where
-    fmap f a = IndexMonad $ \m -> f (runIndex a m)
+    fmap f a = indexMonad $ f . runIndex a
 
 instance Applicative IndexMonad where
-    pure a  = IndexMonad $ const a
-    f <*> a = IndexMonad $ \m -> runIndex f m (runIndex a m)
+    pure a  = indexMonad $ const a
+    f <*> a = indexMonad $ \m -> runIndex f m (runIndex a m)
 
 instance Monad IndexMonad where
     return  = pure
-    a >>= f = IndexMonad $ \m -> runIndex (f (runIndex a m)) m
+    a >>= f = indexMonad $ \m -> runIndex (f (runIndex a m)) m
 
 
 -- | Useful type aliases
@@ -30,5 +39,5 @@ type Quantity  = IndexMonad Double
 -- | Evaluation the value of an index inside the monad
 
 evalIndex :: FinIndex -> Quantity
-evalIndex i = IndexMonad $ \m -> M.findWithDefault 0 i (indexMap m)
+evalIndex i = indexMonad $ \m -> M.findWithDefault 0 i (indexMap m)
 

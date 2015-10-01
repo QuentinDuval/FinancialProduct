@@ -4,25 +4,25 @@ module Main (
 
 
 import qualified Bond
-import Data.Time
 import EvalMonad
 import FinProduct
 import MarketData
 import MonadUtils
+import TimeUtils
 
 
 -- | Simple test products
 
-prod1 :: UTCTime -> FinProduct
+prod1 :: FinDate -> FinProduct
 prod1 t =
-    scale (var "USD/EUR") $
+    scale (var "USD/EUR" t) $
         mconcat [
-            scale   (var "EURIBOR3M" * cst 0.33)    (trn 120 t "EUR"),
-            scale   (var "GOLD" + var "USD/EUR")    (trn 0.9 t "USD"),
-            eitherP (var "GOLD" .>. cst 10.0)       (trn 12 t "GOLD") (trn 3 t "SILV"),
-            eitherP (var "GOLD" .<. var "USD/EUR")  (trn 17 t "GOLD") (trn 5 t "SILV")]
+            scale   (var "EURIBOR3M" t * cst 0.33)     (trn 120 t "EUR"),
+            scale   (var "GOLD" t + var "USD/EUR" t)   (trn 0.9 t "USD"),
+            eitherP (var "GOLD" t .>. cst 10.0)        (trn 12 t "GOLD") (trn 3 t "SILV"),
+            eitherP (var "GOLD" t .<. var "USD/EUR" t) (trn 17 t "GOLD") (trn 5 t "SILV")]
 
-prod2 :: UTCTime -> FinProduct
+prod2 :: FinDate -> FinProduct
 prod2 t =
     let periods = Bond.PeriodInfo {
             Bond.startDate = t,
@@ -31,21 +31,21 @@ prod2 t =
         bond = Bond.BondInfo {
             Bond.nominal = 10,
             Bond.currency = "EUR",
-            Bond.rate = var "EURIBOR3M" * var "USD/EUR" * cst 0.05 }
+            Bond.rate = var "EURIBOR3M" t * var "USD/EUR" t * cst 0.05 }
     in Bond.buy bond periods
 
 
 -- | Two test market data sets
 
-mds1 :: MarketData
-mds1 = indexes [(FI "USD/EUR"   , 2.35)
-               ,(FI "GOLD"      , 15.8)
-               ,(FI "EURIBOR3M" , 0.98)]
+mds1 :: FinDate -> MarketData
+mds1 t = indexes [(FI "USD/EUR"   , \t -> 2.35 + 0.1 * sin (toDayCount t) )
+                 ,(FI "GOLD"      , const 15.8)
+                 ,(FI "EURIBOR3M" , const 0.98)]
 
-mds2 :: MarketData
-mds2 = indexes [(FI "USD/EUR"   , 2.07)
-               ,(FI "GOLD"      , 1.58)
-               ,(FI "EURIBOR3M" , 1.22)]
+mds2 :: FinDate -> MarketData
+mds2 t = indexes [(FI "USD/EUR"   , const 2.07)
+                 ,(FI "GOLD"      , const 1.58)
+                 ,(FI "EURIBOR3M" , const 1.22)]
 
 
 -- TODO: The description of the financial product is too entangled with the monad
@@ -53,7 +53,7 @@ mds2 = indexes [(FI "USD/EUR"   , 2.07)
 
 -- TODO - Add dates to the indexes as well (not necessarily correlated with the dates of the flows)
 -- Find a way to add the dates for indices:
--- * A map String -> (UTCTime -> Double) might work (but does not allow side effects)
+-- * A map String -> (FinDate -> Double) might work (but does not allow side effects)
 -- * Then to do a simulation, do provide several MarketData generated separately?
 -- * Have a similar map for the volatilities?
 
@@ -70,6 +70,6 @@ main = do
     t <- getCurrentTime
     mapM_ print $ do
         prod <- [prod1, prod2] <*> [t]
-        mds  <- [mds1, mds2]
+        mds  <- [mds1, mds2] <*> [t]
         return $ withMarketData mds (evalProduct prod)
 

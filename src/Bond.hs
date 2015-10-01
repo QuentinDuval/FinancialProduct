@@ -7,7 +7,6 @@ module Bond (
 ) where
 
 import Data.Monoid((<>))
-import Data.Time
 import EvalMonad
 import FinProduct
 import Flow

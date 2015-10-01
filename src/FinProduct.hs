@@ -4,7 +4,6 @@ import Control.Applicative
 import Control.Arrow
 import Control.Monad
 import Control.Lens
-import Data.Time
 
 import EvalMonad
 import Flow
@@ -30,7 +29,7 @@ data FinProduct
 cst :: (Real a) => a -> Quantity
 cst = return . realToFrac
 
-var :: String -> Quantity
+var :: String -> FinDate -> Quantity
 var = evalIndex . FI
 
 trn :: Double -> FinDate -> String -> FinProduct

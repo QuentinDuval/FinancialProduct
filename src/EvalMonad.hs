@@ -10,7 +10,7 @@ import Control.Monad.Identity
 import Control.Monad.Reader
 import qualified Data.Map as M
 import MarketData
-
+import TimeUtils
 
 
 -- | Analog to a simple reader monad to evaluate the deals and read the indices
@@ -47,6 +47,6 @@ type Quantity  = EvalMonad Double
 
 -- | Evaluation the value of an index inside the monad
 
-evalIndex :: FinIndex -> Quantity
-evalIndex i = evalMonad $ \m -> M.findWithDefault 0 i (indexMap m)
+evalIndex :: FinIndex -> FinDate -> Quantity
+evalIndex i t = evalMonad $ \m -> M.findWithDefault (const 0) i (indexMap m) t
 

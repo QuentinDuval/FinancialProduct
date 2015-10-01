@@ -41,10 +41,10 @@ sell bi = create bi { nominal = -1 * nominal bi }
 -- | Private:
 
 lastDate :: PeriodInfo -> FlowDate
-lastDate PeriodInfo{..} = startDate `addDay` (gap * periodCount)
+lastDate PeriodInfo{..} = addDay startDate (gap * periodCount)
 
 midDates :: PeriodInfo -> [FlowDate]
-midDates PeriodInfo{..} = [startDate `addDay` (gap * i) | i <- [1 .. periodCount-1]]
+midDates PeriodInfo{..} = addDay startDate . (gap *) <$> [1..periodCount-1]
 
 create :: BondInfo -> PeriodInfo -> FinProduct
 create BondInfo{..} p =

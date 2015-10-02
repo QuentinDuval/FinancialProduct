@@ -31,7 +31,7 @@ prod2 t =
         bond = Bond.BondInfo {
             Bond.nominal = 10,
             Bond.currency = "EUR",
-            Bond.rate = rate "EURIBOR3M" t * rate "LIBOR" t * cst 0.05 }
+            Bond.couponRate = \t -> rate "EURIBOR3M" t * rate "LIBOR" t * cst 0.05 }
     in Bond.buy bond periods
 
 

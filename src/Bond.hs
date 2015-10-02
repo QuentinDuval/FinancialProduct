@@ -19,7 +19,7 @@ import TimeUtils
 
 data BondInfo = BondInfo {
       nominal       :: Double
-    , rate          :: Quantity
+    , couponRate    :: FinDate -> Quantity
     , currency      :: String
     }
 
@@ -47,9 +47,10 @@ midDates PeriodInfo{..} = addDay startDate . (gap *) <$> [1..periodCount-1]
 
 create :: BondInfo -> PeriodInfo -> FinProduct
 create BondInfo{..} p =
-    let initFlow = trn nominal (startDate p) currency
-        lastFlow = trn (-1 * nominal) (lastDate p) currency
-        midFlows = scale rate <$> [trn (-1 * nominal) d currency | d <- midDates p]
+    let repayment = -1 * nominal
+        initFlow = trn nominal (startDate p) currency
+        lastFlow = trn repayment (lastDate p) currency
+        midFlows = [scale (couponRate d) (trn repayment d currency) | d <- midDates p]
     in initFlow <> mconcat midFlows <> lastFlow
 
 

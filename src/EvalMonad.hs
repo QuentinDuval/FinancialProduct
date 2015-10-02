@@ -3,7 +3,7 @@ module EvalMonad (
     Quantity,
     Predicate,
     withMarketData,
-    evalIndex,
+    evalVar,
 ) where
 
 import Control.Monad.Identity
@@ -47,6 +47,6 @@ type Quantity  = EvalMonad Double
 
 -- | Evaluation the value of an index inside the monad
 
-evalIndex :: FinIndex -> FinDate -> Quantity
-evalIndex i t = evalMonad $ \m -> M.findWithDefault (const 0) i (indexMap m) t
+evalVar :: FinVar -> FinDate -> Quantity
+evalVar i t = evalMonad $ \m -> M.findWithDefault (const 0) i (indexMap m) t
 

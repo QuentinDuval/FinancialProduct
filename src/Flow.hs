@@ -2,6 +2,7 @@
 module Flow where
 
 import Control.Lens
+import Numeric
 import TimeUtils
 
 
@@ -20,7 +21,7 @@ makeLenses ''Flow
 
 instance Show Flow where
     show f =
-        "Flow { value = "   ++ show (_flow f)
+        "Flow { value = "   ++ showFFloat (Just 2) (_flow f) ""
         ++ ", date = "      ++ show (utctDay (_date f))
         ++ ", currency = "  ++ show (_flowCurr f)
         ++ " }"

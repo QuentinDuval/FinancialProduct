@@ -24,8 +24,9 @@ data FinProduct
     | Empty
 
 
-var :: String -> FinDate -> Quantity
-var = evalIndex . FI
+value, rate :: String -> FinDate -> Quantity
+value = evalVar . Stock
+rate  = evalVar . Rate
 
 trn :: Double -> FinDate -> String -> FinProduct
 trn qty date instr = scale (pure qty) (Tangible date (Instrument instr))

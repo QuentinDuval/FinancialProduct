@@ -15,12 +15,12 @@ import TimeUtils
 
 prod1 :: FinDate -> FinProduct
 prod1 t =
-    scale (var "USD/EUR" t) $
+    scale (cst 1.0 + rate "USD/EUR" t) $
         mconcat [
-            scale   (var "EURIBOR3M" t * cst 0.33)     (trn 120 t "EUR"),
-            scale   (var "GOLD" t + var "USD/EUR" t)   (trn 0.9 t "USD"),
-            eitherP (var "GOLD" t .>. cst 10.0)        (trn 12 t "GOLD") (trn 3 t "SILV"),
-            eitherP (var "GOLD" t .<. var "USD/EUR" t) (trn 17 t "GOLD") (trn 5 t "SILV")]
+            scale   (rate "EURIBOR3M" t + cst 0.33)     (trn 120 t "EUR"),
+            scale   (value "GOLD" t * rate "USD/EUR" t) (trn 0.9 t "USD"),
+            eitherP (value "GOLD" t .<. cst 10.0)       (trn 12 t "SILV") (trn 10 t "GOLD"),
+            eitherP (value "GOLD" t .>. value "SILV" t) (trn 10 t "GOLD") (trn 10 t "SILV")]
 
 prod2 :: FinDate -> FinProduct
 prod2 t =
@@ -31,21 +31,23 @@ prod2 t =
         bond = Bond.BondInfo {
             Bond.nominal = 10,
             Bond.currency = "EUR",
-            Bond.rate = var "EURIBOR3M" t * var "USD/EUR" t * cst 0.05 }
+            Bond.rate = rate "EURIBOR3M" t * rate "USD/EUR" t * cst 0.05 }
     in Bond.buy bond periods
 
 
 -- | Two test market data sets
 
 mds1 :: FinDate -> MarketData
-mds1 t = indexes [(FI "USD/EUR"   , \t -> 2.35 + 0.1 * sin (toDayCount t) )
-                 ,(FI "GOLD"      , const 15.8)
-                 ,(FI "EURIBOR3M" , const 0.98)]
+mds1 t = indexes [(Rate "USD/EUR"   , \t -> 2.35 + 0.1 * sin (toDayCount t) )
+                 ,(Stock "GOLD"     , const 15.8)
+                 ,(Stock "SILV"     , const 11.3)
+                 ,(Rate "EURIBOR3M" , const 0.98)]
 
 mds2 :: FinDate -> MarketData
-mds2 t = indexes [(FI "USD/EUR"   , const 2.07)
-                 ,(FI "GOLD"      , const 1.58)
-                 ,(FI "EURIBOR3M" , const 1.22)]
+mds2 t = indexes [(Rate "USD/EUR"   , \t -> 2.07 + log (toDayCount t) / 100)
+                 ,(Stock "GOLD"     , const 1.58)
+                 ,(Stock "SILV"     , const 11.3)
+                 ,(Rate "EURIBOR3M" , const 1.22)]
 
 
 -- TODO: The description of the financial product is too entangled with the monad

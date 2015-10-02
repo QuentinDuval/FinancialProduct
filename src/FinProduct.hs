@@ -28,7 +28,7 @@ stock, rate :: String -> FinDate -> Quantity
 stock = evalVar . Stock
 rate  = evalVar . Rate
 
-stockRate :: String -> String -> FinDate -> Quantity
+stockRate :: String -> String -> FinDate -> Quantity    -- TODO - Try to have different kind of rates instead
 stockRate s1 s2 t = (/) <$> stock s1 t <*> stock s2 t
 
 trn :: Double -> FinDate -> String -> FinProduct

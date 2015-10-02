@@ -15,10 +15,10 @@ import TimeUtils
 
 prod1 :: FinDate -> FinProduct
 prod1 t =
-    scale (cst 1.0 + rate "USD/EUR" t) $
+    scale (cst 1.0 + stockRate "USD" "EUR" t) $
         mconcat [
             scale   (rate "EURIBOR3M" t + cst 0.33)     (trn 120 t "EUR"),
-            scale   (stock "GOLD" t * rate "USD/EUR" t) (trn 0.9 t "USD"),
+            scale   (stock "GOLD" t * rate "LIBOR" t)   (trn 0.9 t "USD"),
             eitherP (stock "GOLD" t .<. cst 10.0)       (trn 12 t "SILV") (trn 10 t "GOLD"),
             eitherP (stock "GOLD" t .>. stock "SILV" t) (trn 10 t "GOLD") (trn 10 t "SILV")]
 
@@ -31,7 +31,7 @@ prod2 t =
         bond = Bond.BondInfo {
             Bond.nominal = 10,
             Bond.currency = "EUR",
-            Bond.rate = rate "EURIBOR3M" t * rate "USD/EUR" t * cst 0.05 }
+            Bond.rate = rate "EURIBOR3M" t * rate "LIBOR" t * cst 0.05 }
     in Bond.buy bond periods
 
 
@@ -39,15 +39,19 @@ prod2 t =
 
 mds1 :: FinDate -> MarketData
 mds1 t = initMds    [(Stock "GOLD"     , const 15.8)
-                    ,(Stock "SILV"     , const 11.3)]
-                    [(Rate "USD/EUR"   , \t -> 2.35 + 0.1 * sin (toDayCount t) )
-                    ,(Rate "EURIBOR3M" , const 0.98)]
+                    ,(Stock "SILV"     , const 11.3)
+                    ,(Stock "USD"      , const 1.0)
+                    ,(Stock "EUR"      , \t -> 1.1 + 0.1 * sin (toDayCount t))]
+                    [(Rate "EURIBOR3M" , const 0.98)
+                    ,(Rate "LIBOR"     , const 1.11)]
 
 mds2 :: FinDate -> MarketData
 mds2 t = initMds    [(Stock "GOLD"     , const 1.58)
-                    ,(Stock "SILV"     , const 11.3)]
-                    [(Rate "USD/EUR"   , \t -> 2.07 + log (toDayCount t) / 100)
-                    ,(Rate "EURIBOR3M" , const 1.22)]
+                    ,(Stock "SILV"     , const 11.3)
+                    ,(Stock "USD"      , const 1.0)
+                    ,(Stock "EUR"      , \t -> 0.9  + 0.1 * sin (toDayCount t))]
+                    [(Rate "EURIBOR3M" , \t -> 1.22 + 0.5 * sin (toDayCount t / 10))
+                    ,(Rate "LIBOR"     , \t -> 1.18 + 0.5 * cos (toDayCount t / 12))]
 
 
 -- TODO: The description of the financial product is too entangled with the monad

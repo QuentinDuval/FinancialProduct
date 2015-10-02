@@ -18,9 +18,9 @@ prod1 t =
     scale (cst 1.0 + rate "USD/EUR" t) $
         mconcat [
             scale   (rate "EURIBOR3M" t + cst 0.33)     (trn 120 t "EUR"),
-            scale   (value "GOLD" t * rate "USD/EUR" t) (trn 0.9 t "USD"),
-            eitherP (value "GOLD" t .<. cst 10.0)       (trn 12 t "SILV") (trn 10 t "GOLD"),
-            eitherP (value "GOLD" t .>. value "SILV" t) (trn 10 t "GOLD") (trn 10 t "SILV")]
+            scale   (stock "GOLD" t * rate "USD/EUR" t) (trn 0.9 t "USD"),
+            eitherP (stock "GOLD" t .<. cst 10.0)       (trn 12 t "SILV") (trn 10 t "GOLD"),
+            eitherP (stock "GOLD" t .>. stock "SILV" t) (trn 10 t "GOLD") (trn 10 t "SILV")]
 
 prod2 :: FinDate -> FinProduct
 prod2 t =
@@ -38,16 +38,16 @@ prod2 t =
 -- | Two test market data sets
 
 mds1 :: FinDate -> MarketData
-mds1 t = indexes [(Rate "USD/EUR"   , \t -> 2.35 + 0.1 * sin (toDayCount t) )
-                 ,(Stock "GOLD"     , const 15.8)
-                 ,(Stock "SILV"     , const 11.3)
-                 ,(Rate "EURIBOR3M" , const 0.98)]
+mds1 t = initMds    [(Stock "GOLD"     , const 15.8)
+                    ,(Stock "SILV"     , const 11.3)]
+                    [(Rate "USD/EUR"   , \t -> 2.35 + 0.1 * sin (toDayCount t) )
+                    ,(Rate "EURIBOR3M" , const 0.98)]
 
 mds2 :: FinDate -> MarketData
-mds2 t = indexes [(Rate "USD/EUR"   , \t -> 2.07 + log (toDayCount t) / 100)
-                 ,(Stock "GOLD"     , const 1.58)
-                 ,(Stock "SILV"     , const 11.3)
-                 ,(Rate "EURIBOR3M" , const 1.22)]
+mds2 t = initMds    [(Stock "GOLD"     , const 1.58)
+                    ,(Stock "SILV"     , const 11.3)]
+                    [(Rate "USD/EUR"   , \t -> 2.07 + log (toDayCount t) / 100)
+                    ,(Rate "EURIBOR3M" , const 1.22)]
 
 
 -- TODO: The description of the financial product is too entangled with the monad

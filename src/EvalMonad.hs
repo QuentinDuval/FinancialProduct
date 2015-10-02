@@ -8,7 +8,9 @@ module EvalMonad (
 
 import Control.Monad.Identity
 import Control.Monad.Reader
+import Data.Default
 import qualified Data.Map as M
+import Data.Maybe
 import MarketData
 import TimeUtils
 
@@ -45,8 +47,8 @@ type Predicate = EvalMonad Bool
 type Quantity  = EvalMonad Double
 
 
--- | Evaluation the value of an index inside the monad
+-- | Evaluation the market value inside the monad
 
-evalVar :: FinVar -> FinDate -> Quantity
-evalVar i t = evalMonad $ \m -> M.findWithDefault (const 0) i (indexMap m) t
+evalVar :: (Observable a b, Default b) => a -> FinDate -> EvalMonad b
+evalVar s t = evalMonad $ \m -> fromMaybe def (observe m s t)
 

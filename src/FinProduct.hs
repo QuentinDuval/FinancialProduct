@@ -24,8 +24,8 @@ data FinProduct
     | Empty
 
 
-value, rate :: String -> FinDate -> Quantity
-value = evalVar . Stock
+stock, rate :: String -> FinDate -> Quantity
+stock = evalVar . Stock
 rate  = evalVar . Rate
 
 trn :: Double -> FinDate -> String -> FinProduct

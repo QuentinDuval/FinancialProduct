@@ -31,7 +31,7 @@ prod2 t =
         bond = Bond.BondInfo {
             Bond.nominal = 10,
             Bond.currency = "EUR",
-            Bond.couponRate = \t -> rate "EURIBOR3M" t * rate "LIBOR" t * cst 0.05 }
+            Bond.couponRate = (+) <$> rate "EURIBOR3M" <*> rate "LIBOR" }
     in Bond.buy bond periods
 
 
@@ -42,16 +42,16 @@ mds1 t = initMds    [(Stock "GOLD"     , const 15.8)
                     ,(Stock "SILV"     , const 11.3)
                     ,(Stock "USD"      , const 1.0)
                     ,(Stock "EUR"      , \t -> 1.1 + 0.1 * sin (toDayCount t))]
-                    [(Rate "EURIBOR3M" , const 0.98)
-                    ,(Rate "LIBOR"     , const 1.11)]
+                    [(Rate "EURIBOR3M" , const 0.05)
+                    ,(Rate "LIBOR"     , const 0.06)]
 
 mds2 :: FinDate -> MarketData
 mds2 t = initMds    [(Stock "GOLD"     , const 1.58)
                     ,(Stock "SILV"     , const 11.3)
                     ,(Stock "USD"      , const 1.0)
                     ,(Stock "EUR"      , \t -> 0.9  + 0.1 * sin (toDayCount t))]
-                    [(Rate "EURIBOR3M" , \t -> 1.22 + 0.5 * sin (toDayCount t / 10))
-                    ,(Rate "LIBOR"     , \t -> 1.18 + 0.5 * cos (toDayCount t / 12))]
+                    [(Rate "EURIBOR3M" , \t -> 0.05 + 0.01 * sin (toDayCount t / 10))
+                    ,(Rate "LIBOR"     , \t -> 0.06 + 0.01 * cos (toDayCount t / 12))]
 
 
 -- TODO: The description of the financial product is too entangled with the monad

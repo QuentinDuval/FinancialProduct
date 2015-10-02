@@ -20,6 +20,6 @@ addDay utc shifter = utc { utctDay = addDays shifter (utctDay utc) }
 
 -- | Time to seconds
 
-toDayCount :: FinDate -> Double
+toDayCount :: (Num a) => FinDate -> a
 toDayCount = fromIntegral . toModifiedJulianDay . localDay . utcToLocalTime utc
 

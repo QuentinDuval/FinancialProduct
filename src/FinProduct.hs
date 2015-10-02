@@ -1,7 +1,6 @@
 module FinProduct where
 
 import Control.Applicative
-import Control.Arrow
 import Control.Monad
 import Control.Lens
 
@@ -14,8 +13,7 @@ import TimeUtils
 
 -- | Vocabulary to describe financial products
 
-newtype Instrument
-    = Instrument { instrumentLabel :: String }
+newtype Instrument = Instrument { instrumentLabel :: String }
     deriving (Show, Eq, Ord)
 
 data FinProduct
@@ -53,15 +51,15 @@ instance Monoid FinProduct where
 
 evalProduct :: FinProduct -> EvalMonad [Flow]
 evalProduct Empty           = return []
-evalProduct (Tangible d s)  = return [Flow 1 d (instrumentLabel s)]
+evalProduct (Tangible d i)  = return [Flow 1 d (instrumentLabel i)]
 evalProduct (AllOf ps)      = concat <$> mapM evalProduct ps
 evalProduct (FirstOf ps)    = do
     p <- findM fst ps
     maybe (return []) (evalProduct . snd) p
-evalProduct (Scale qty f)   = do
+evalProduct (Scale qty p)   = do
     val <- qty
-    fs <- evalProduct f
-    return $ over flow (* val) <$> fs
+    flows <- evalProduct p
+    return $ over flow (* val) <$> flows
 
 
 

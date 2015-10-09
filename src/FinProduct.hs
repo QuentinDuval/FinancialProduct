@@ -1,3 +1,4 @@
+{-# LANGUAGE PatternSynonyms #-}
 module FinProduct where
 
 import Control.Applicative
@@ -17,16 +18,20 @@ import Utils.Time
 -- TODO: Add a BestOf product, but requires a "reference"
 -- TODO: Remove date from tangible, and allow to set / shift date
 
-data CompRule               -- | Composition rule
-    = AllOf                 -- ^ All products are considered
-    | FirstOf [Predicate]   -- ^ First first matching predicate
-    | BestOf Stock          -- ^ Best of a set of product (based on a reference stock)
+data CompRule                   -- | Composition rule
+    = AllOfRule                 -- ^ All products are considered
+    | FirstOfRule [Predicate]   -- ^ First first matching predicate
+    | BestOfRule Stock          -- ^ Best of a set of product (based on a reference stock)
 
 data FinProduct
     = Tangible  FinDate Stock
     | Scale     Quantity FinProduct
     | Compose   CompRule [FinProduct]
     | Empty
+
+pattern AllOf ps        = Compose AllOfRule ps
+pattern FirstOf cs ps   = Compose (FirstOfRule cs) ps
+pattern BestOf s ps     = Compose (BestOfRule s) ps
 
 
 stock, rate :: String -> FinDate -> Quantity
@@ -53,32 +58,32 @@ ifThen :: Predicate -> FinProduct -> FinProduct
 ifThen p a = eitherP p a Empty
 
 eitherP :: Predicate -> FinProduct -> FinProduct -> FinProduct
-eitherP p a b = Compose (FirstOf [p, pure True]) [a, b]
+eitherP p a b = FirstOf [p, pure True] [a, b]
 
 bestOfBy :: Stock -> [FinProduct] -> FinProduct
-bestOfBy = Compose . BestOf
+bestOfBy = BestOf
 
 instance Monoid FinProduct where
     mempty = Empty
-    mappend x (Compose AllOf xs) = Compose AllOf (x:xs)
-    mappend (Compose AllOf xs) x = Compose AllOf (x:xs)
-    mappend a b = Compose AllOf [a, b]
-    mconcat = Compose AllOf
+    mappend x (AllOf xs) = AllOf (x:xs)
+    mappend (AllOf xs) x = AllOf (x:xs)
+    mappend a b = AllOf [a, b]
+    mconcat = AllOf
 
 
 -- | Evaluation of the production of financial products
 
 evalProduct :: FinProduct -> EvalMonad [Flow]
-evalProduct Empty               = return []
-evalProduct (Tangible d i)      = return [Flow 1 d i]
-evalProduct (Compose AllOf ps)  = concat <$> mapM evalProduct ps
+evalProduct Empty           = return []
+evalProduct (Tangible d i)  = return [Flow 1 d i]
+evalProduct (AllOf ps)      = concat <$> mapM evalProduct ps
 
-evalProduct (Compose (FirstOf cs) ps) = do
+evalProduct (FirstOf cs ps) = do
     firstMatch <- findM fst (zip cs ps)
     let p = maybe Empty snd firstMatch
     evalProduct p
 
-evalProduct (Compose (BestOf ref) ps) = do
+evalProduct (BestOf ref ps) = do
     evals <- forM ps $ \p -> do
         flows <- evalProduct p
         converted <- mapM (convert ref) flows

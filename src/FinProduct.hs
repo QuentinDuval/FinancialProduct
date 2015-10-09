@@ -33,6 +33,15 @@ pattern AllOf ps        = Compose AllOfRule ps
 pattern FirstOf cs ps   = Compose (FirstOfRule cs) ps
 pattern BestOf s ps     = Compose (BestOfRule s) ps
 
+instance Monoid FinProduct where
+    mempty = Empty
+    mappend x (AllOf xs) = AllOf (x:xs)
+    mappend (AllOf xs) x = AllOf (x:xs)
+    mappend a b = AllOf [a, b]
+    mconcat = AllOf
+
+
+-- | Combinators
 
 stock, rate :: String -> FinDate -> Quantity
 stock = evalVar . Stock
@@ -62,13 +71,6 @@ eitherP p a b = FirstOf [p, pure True] [a, b]
 
 bestOfBy :: Stock -> [FinProduct] -> FinProduct
 bestOfBy = BestOf
-
-instance Monoid FinProduct where
-    mempty = Empty
-    mappend x (AllOf xs) = AllOf (x:xs)
-    mappend (AllOf xs) x = AllOf (x:xs)
-    mappend a b = AllOf [a, b]
-    mconcat = AllOf
 
 
 -- | Evaluation of the production of financial products

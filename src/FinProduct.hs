@@ -11,15 +11,11 @@ import Utils.Time
 
 
 -- | Vocabulary to describe financial products
-
-newtype Instrument = Instrument { instrumentLabel :: String }
-    deriving (Show, Eq, Ord)
-
 -- TODO: Add a BestOf product, but requires a "reference"
 -- TODO: Remove date from tangible, and allow to set / shift date
 
 data FinProduct
-    = Tangible  FinDate Instrument
+    = Tangible  FinDate Stock
     | Scale     Quantity FinProduct
     | AllOf     [FinProduct]                -- ^ All products are considered
     | FirstOf   [(Predicate, FinProduct)]   -- ^ First first matching predicate
@@ -34,7 +30,7 @@ stockRate :: String -> String -> FinDate -> Quantity    -- TODO: Try to have dif
 stockRate s1 s2 t = (/) <$> stock s1 t <*> stock s2 t
 
 trn :: Double -> FinDate -> String -> FinProduct
-trn qty date instr = scale (cst qty) (Tangible date (Instrument instr))
+trn qty date instr = scale (cst qty) (Tangible date (Stock instr))
 
 scale :: Quantity -> FinProduct -> FinProduct
 scale _ Empty           = Empty
@@ -65,7 +61,7 @@ instance Monoid FinProduct where
 
 evalProduct :: FinProduct -> EvalMonad [Flow]
 evalProduct Empty           = return []
-evalProduct (Tangible d i)  = return [Flow 1 d (instrumentLabel i)]
+evalProduct (Tangible d i)  = return [Flow 1 d (stockLabel i)]
 evalProduct (AllOf ps)      = concat <$> mapM evalProduct ps
 evalProduct (FirstOf ps)    = do
     firstMatch <- findM fst ps

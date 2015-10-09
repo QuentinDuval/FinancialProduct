@@ -8,8 +8,8 @@ import Utils.Time
 
 -- | Market data set definition
 
-data Stock      = Stock String deriving (Show, Eq, Ord)
-data Rate       = Rate  String deriving (Show, Eq, Ord)
+data Stock      = Stock { stockLabel :: String } deriving (Show, Eq, Ord)
+data Rate       = Rate  { rateLabel  ::  String } deriving (Show, Eq, Ord)
 type TimeValue  = FinDate -> Double
 
 data MarketData = MarketData

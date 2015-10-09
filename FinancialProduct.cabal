@@ -18,14 +18,14 @@ executable FinancialProduct
     default-language: Haskell2010
     hs-source-dirs: src
     other-modules:
-        Bond
         EvalMonad
         FinProduct
         Flow
+        Listed.Bond
+        Listed.SimpleOption
         MarketData
-        MonadUtils
-        SimpleOption
-        TimeUtils
+        Utils.Monad
+        Utils.Time
     ghc-options: -ferror-spans
 
 test-suite test-FinancialProduct

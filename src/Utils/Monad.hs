@@ -1,5 +1,5 @@
 {-# LANGUAGE FlexibleInstances #-}
-module MonadUtils where
+module Utils.Monad where
 
 import Control.Applicative
 import Control.Monad

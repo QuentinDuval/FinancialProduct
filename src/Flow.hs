@@ -1,7 +1,7 @@
 module Flow where
 
 import Numeric
-import TimeUtils
+import Utils.Time
 
 
 -- | Data structure to describe the production of financial products

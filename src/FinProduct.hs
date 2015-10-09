@@ -6,8 +6,8 @@ import Control.Monad
 import EvalMonad
 import Flow
 import MarketData
-import MonadUtils
-import TimeUtils
+import Utils.Monad
+import Utils.Time
 
 
 -- | Vocabulary to describe financial products

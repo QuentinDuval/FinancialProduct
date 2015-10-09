@@ -1,5 +1,5 @@
-module TimeUtils (
-    module TimeUtils,
+module Utils.Time (
+    module Utils.Time,
     module Data.Time
 ) where
 

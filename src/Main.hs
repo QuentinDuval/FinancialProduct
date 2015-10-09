@@ -3,15 +3,15 @@ module Main (
 ) where
 
 
-import qualified Bond
-import qualified SimpleOption as Opt
+import qualified Listed.Bond as Bond
+import qualified Listed.SimpleOption as Opt
 
 import Data.Monoid
 import EvalMonad
 import FinProduct
 import MarketData
-import MonadUtils
-import TimeUtils
+import Utils.Monad
+import Utils.Time
 
 
 -- | Simple test products

@@ -1,5 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
-module Bond (
+module Listed.Bond (
     BondInfo(..),
     PeriodInfo(..),
     buy,
@@ -10,7 +10,7 @@ import Data.Monoid((<>))
 import EvalMonad
 import FinProduct
 import Flow
-import TimeUtils
+import Utils.Time
 
 
 
@@ -52,5 +52,3 @@ create BondInfo{..} p =
         lastFlow = trn repayment (lastDate p) currency
         midFlows = [scale (couponRate d) (trn repayment d currency) | d <- midDates p]
     in initFlow <> mconcat midFlows <> lastFlow
-
-

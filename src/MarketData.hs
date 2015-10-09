@@ -3,7 +3,7 @@
 module MarketData where
 
 import qualified Data.Map as M
-import TimeUtils
+import Utils.Time
 
 
 -- | Market data set definition

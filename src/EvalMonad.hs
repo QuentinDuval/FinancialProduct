@@ -12,7 +12,7 @@ import Data.Default
 import qualified Data.Map as M
 import Data.Maybe
 import MarketData
-import TimeUtils
+import Utils.Time
 
 
 -- | Analog to a simple reader monad to evaluate the deals and read the indices

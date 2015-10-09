@@ -1,5 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
-module SimpleOption (
+module Listed.SimpleOption (
     OptionInfo(..),
     create
 ) where
@@ -8,8 +8,8 @@ import Data.Monoid((<>))
 import EvalMonad
 import FinProduct
 import Flow
-import MonadUtils
-import TimeUtils
+import Utils.Monad
+import Utils.Time
 
 
 

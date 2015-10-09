@@ -3,6 +3,8 @@ module FinProduct where
 import Control.Applicative
 import Control.Arrow
 import Control.Monad
+import Data.Function
+import Data.List
 import EvalMonad
 import Flow
 import MarketData
@@ -11,6 +13,7 @@ import Utils.Time
 
 
 -- | Vocabulary to describe financial products
+
 -- TODO: Add a BestOf product, but requires a "reference"
 -- TODO: Remove date from tangible, and allow to set / shift date
 
@@ -19,6 +22,7 @@ data FinProduct
     | Scale     Quantity FinProduct
     | AllOf     [FinProduct]                -- ^ All products are considered
     | FirstOf   [(Predicate, FinProduct)]   -- ^ First first matching predicate
+    | BestOf    Stock [FinProduct]          -- ^ Best of a set of product (based on a reference stock)
     | Empty
 
 
@@ -49,6 +53,9 @@ ifThen p a = eitherP p a Empty
 eitherP :: Predicate -> FinProduct -> FinProduct -> FinProduct
 eitherP p a b = FirstOf [(p, a), (pure True, b)]
 
+bestOfBy :: Stock -> [FinProduct] -> FinProduct
+bestOfBy = BestOf
+
 instance Monoid FinProduct where
     mempty = Empty
     mappend x (AllOf xs) = AllOf (x:xs)
@@ -61,12 +68,22 @@ instance Monoid FinProduct where
 
 evalProduct :: FinProduct -> EvalMonad [Flow]
 evalProduct Empty           = return []
-evalProduct (Tangible d i)  = return [Flow 1 d (stockLabel i)]
+evalProduct (Tangible d i)  = return [Flow 1 d i]
 evalProduct (AllOf ps)      = concat <$> mapM evalProduct ps
+
 evalProduct (FirstOf ps)    = do
     firstMatch <- findM fst ps
     let p = maybe Empty snd firstMatch
     evalProduct p
+
+evalProduct (BestOf ref ps) = do
+    evals <- forM ps $ \p -> do
+        flows <- evalProduct p
+        converted <- mapM (convert ref) flows
+        return (flows, sum $ fmap flow converted)
+    let best = maximumBy (compare `on` snd) evals
+    return (fst best)
+
 evalProduct (Scale qty p)   = do
     val <- qty
     flows <- evalProduct p

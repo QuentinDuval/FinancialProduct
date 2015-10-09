@@ -20,10 +20,11 @@ testP :: FinDate -> FinProduct
 testP t =
     scale (cst 1.0 + stockRate "USD" "EUR" t) $
         mconcat [
-            scale   (rate "EURIBOR3M" t + cst 0.33)     (trn 120 t "EUR"),
-            scale   (stock "GOLD" t * rate "LIBOR" t)   (trn 0.9 t "USD"),
-            eitherP (stock "GOLD" t .<. cst 10.0)       (trn 12 t "SILV") (trn 10 t "GOLD"),
-            eitherP (stock "GOLD" t .>. stock "SILV" t) (trn 10 t "GOLD") (trn 10 t "SILV")]
+            bestOfBy (Stock "USD")                       [trn 120 t "EUR" , trn 120 t "USD"],
+            scale    (rate "EURIBOR3M" t + cst 0.33)     (trn 120 t "EUR"),
+            scale    (stock "GOLD" t * rate "LIBOR" t)   (trn 0.9 t "USD"),
+            eitherP  (stock "GOLD" t .<. cst 10.0)       (trn 12 t "SILV") (trn 10 t "GOLD"),
+            eitherP  (stock "GOLD" t .>. stock "SILV" t) (trn 10 t "GOLD") (trn 10 t "SILV")]
 
 bond :: (FinDate -> Quantity) -> FinDate -> FinProduct
 bond couponRate t = Bond.buy bondInfo periods

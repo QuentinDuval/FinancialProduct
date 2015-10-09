@@ -39,6 +39,7 @@ trn qty date instr = scale (cst qty) (Tangible date (Stock instr))
 scale :: Quantity -> FinProduct -> FinProduct
 scale _ Empty           = Empty
 scale q (AllOf ps)      = AllOf (scale q <$> ps)
+scale q (BestOf s ps)   = BestOf s (scale q <$> ps)
 scale q (FirstOf ps)    = FirstOf (second (scale q) <$> ps)
 scale q (Scale q' p)    = Scale (q * q') p
 scale q p               = Scale q p

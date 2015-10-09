@@ -17,12 +17,15 @@ import Utils.Time
 -- TODO: Add a BestOf product, but requires a "reference"
 -- TODO: Remove date from tangible, and allow to set / shift date
 
+data CompRule               -- | Composition rule
+    = AllOf                 -- ^ All products are considered
+    | FirstOf [Predicate]   -- ^ First first matching predicate
+    | BestOf Stock          -- ^ Best of a set of product (based on a reference stock)
+
 data FinProduct
     = Tangible  FinDate Stock
     | Scale     Quantity FinProduct
-    | AllOf     [FinProduct]                -- ^ All products are considered
-    | FirstOf   [(Predicate, FinProduct)]   -- ^ First first matching predicate
-    | BestOf    Stock [FinProduct]          -- ^ Best of a set of product (based on a reference stock)
+    | Compose   CompRule [FinProduct]
     | Empty
 
 
@@ -38,9 +41,7 @@ trn qty date instr = scale (cst qty) (Tangible date (Stock instr))
 
 scale :: Quantity -> FinProduct -> FinProduct
 scale _ Empty           = Empty
-scale q (AllOf ps)      = AllOf (scale q <$> ps)
-scale q (BestOf s ps)   = BestOf s (scale q <$> ps)
-scale q (FirstOf ps)    = FirstOf (second (scale q) <$> ps)
+scale q (Compose r ps)  = Compose r (scale q <$> ps)
 scale q (Scale q' p)    = Scale (q * q') p
 scale q p               = Scale q p
 
@@ -52,32 +53,32 @@ ifThen :: Predicate -> FinProduct -> FinProduct
 ifThen p a = eitherP p a Empty
 
 eitherP :: Predicate -> FinProduct -> FinProduct -> FinProduct
-eitherP p a b = FirstOf [(p, a), (pure True, b)]
+eitherP p a b = Compose (FirstOf [p, pure True]) [a, b]
 
 bestOfBy :: Stock -> [FinProduct] -> FinProduct
-bestOfBy = BestOf
+bestOfBy = Compose . BestOf
 
 instance Monoid FinProduct where
     mempty = Empty
-    mappend x (AllOf xs) = AllOf (x:xs)
-    mappend (AllOf xs) x = AllOf (x:xs)
-    mappend a b = AllOf [a, b]
-    mconcat = AllOf
+    mappend x (Compose AllOf xs) = Compose AllOf (x:xs)
+    mappend (Compose AllOf xs) x = Compose AllOf (x:xs)
+    mappend a b = Compose AllOf [a, b]
+    mconcat = Compose AllOf
 
 
 -- | Evaluation of the production of financial products
 
 evalProduct :: FinProduct -> EvalMonad [Flow]
-evalProduct Empty           = return []
-evalProduct (Tangible d i)  = return [Flow 1 d i]
-evalProduct (AllOf ps)      = concat <$> mapM evalProduct ps
+evalProduct Empty               = return []
+evalProduct (Tangible d i)      = return [Flow 1 d i]
+evalProduct (Compose AllOf ps)  = concat <$> mapM evalProduct ps
 
-evalProduct (FirstOf ps)    = do
-    firstMatch <- findM fst ps
+evalProduct (Compose (FirstOf cs) ps) = do
+    firstMatch <- findM fst (zip cs ps)
     let p = maybe Empty snd firstMatch
     evalProduct p
 
-evalProduct (BestOf ref ps) = do
+evalProduct (Compose (BestOf ref) ps) = do
     evals <- forM ps $ \p -> do
         flows <- evalProduct p
         converted <- mapM (convert ref) flows

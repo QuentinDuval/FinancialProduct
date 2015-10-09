@@ -1,9 +1,7 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TemplateHaskell #-}
 module MarketData where
 
-import Control.Lens
 import qualified Data.Map as M
 import TimeUtils
 
@@ -15,10 +13,8 @@ data Rate       = Rate  String deriving (Show, Eq, Ord)
 type TimeValue  = FinDate -> Double
 
 data MarketData = MarketData
-    { _stockMap :: M.Map Stock TimeValue
-    , _rateMap  :: M.Map Rate  TimeValue }
-
-makeLenses ''MarketData
+    { stockMap :: M.Map Stock TimeValue
+    , rateMap  :: M.Map Rate  TimeValue }
 
 
 -- | Observable values in the market data
@@ -27,10 +23,10 @@ class Observable a b | a -> b where
     observe :: MarketData -> a -> FinDate -> Maybe b
 
 instance Observable Stock Double where
-    observe m = findInMap (m ^. stockMap)
+    observe = findInMap . stockMap
 
 instance Observable Rate Double where
-    observe m = findInMap (m ^. rateMap)
+    observe = findInMap . rateMap
 
 
 -- | Helpers to construct a market data set
@@ -42,10 +38,10 @@ initMds :: (Foldable f1, Foldable f2) => f1 (Stock, TimeValue) -> f2 (Rate, Time
 initMds s r = addStocks s (addRates r emptyMds)
 
 addStocks :: (Foldable f) => f (Stock, TimeValue) -> MarketData -> MarketData
-addStocks f = over stockMap (`addToMap` f)
+addStocks f m = m { stockMap = stockMap m `addToMap` f }
 
 addRates :: (Foldable f) => f (Rate, TimeValue) -> MarketData -> MarketData
-addRates f = over rateMap (`addToMap` f)
+addRates f m = m { rateMap = rateMap m `addToMap` f }
 
 
 -- | Private

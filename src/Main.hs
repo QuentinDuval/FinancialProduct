@@ -4,6 +4,9 @@ module Main (
 
 
 import qualified Bond
+import qualified SimpleOption as Opt
+
+import Data.Monoid
 import EvalMonad
 import FinProduct
 import MarketData
@@ -13,8 +16,8 @@ import TimeUtils
 
 -- | Simple test products
 
-prod1 :: FinDate -> FinProduct
-prod1 t =
+testP :: FinDate -> FinProduct
+testP t =
     scale (cst 1.0 + stockRate "USD" "EUR" t) $
         mconcat [
             scale   (rate "EURIBOR3M" t + cst 0.33)     (trn 120 t "EUR"),
@@ -22,17 +25,26 @@ prod1 t =
             eitherP (stock "GOLD" t .<. cst 10.0)       (trn 12 t "SILV") (trn 10 t "GOLD"),
             eitherP (stock "GOLD" t .>. stock "SILV" t) (trn 10 t "GOLD") (trn 10 t "SILV")]
 
-prod2 :: FinDate -> FinProduct
-prod2 t =
-    let periods = Bond.PeriodInfo {
-            Bond.startDate = t,
-            Bond.gap = 10,
-            Bond.periodCount = 3 }
-        bond = Bond.BondInfo {
-            Bond.nominal = 10,
-            Bond.currency = "EUR",
-            Bond.couponRate = (+) <$> rate "EURIBOR3M" <*> rate "LIBOR" }
-    in Bond.buy bond periods
+bond :: (FinDate -> Quantity) -> FinDate -> FinProduct
+bond couponRate t = Bond.buy bondInfo periods
+    where
+        periods  = Bond.PeriodInfo { Bond.startDate = t, Bond.period = 10,      Bond.periodCount = 3 }
+        bondInfo = Bond.BondInfo   { Bond.nominal = 10,  Bond.currency = "EUR", Bond.couponRate = couponRate }
+
+bond1, bond2 :: FinDate -> FinProduct
+bond1   = bond $ (+) <$> rate "EURIBOR3M" <*> rate "LIBOR"
+bond2 t = bond (const $ cst 0.05 * stockRate "EUR" "USD" t) t
+
+simpleOption :: FinDate -> FinProduct
+simpleOption t = Opt.create optInfo t
+    where
+        optInfo = Opt.OptionInfo {
+            Opt.premium   = trn 5 t "USD",
+            Opt.maturity  = 5,
+            Opt.strike    = 10,
+            Opt.quantity  = cst 27 * stock "EUR" t,
+            Opt.buyInstr  = "GOLD",
+            Opt.sellInstr = "USD" }
 
 
 -- | Two test market data sets
@@ -47,7 +59,7 @@ mds1 t = initMds    [(Stock "GOLD"     , const 15.8)
 
 mds2 :: FinDate -> MarketData
 mds2 t = initMds    [(Stock "GOLD"     , const 1.58)
-                    ,(Stock "SILV"     , const 11.3)
+                    ,(Stock "SILV"     , const 17.3)
                     ,(Stock "USD"      , const 1.0)
                     ,(Stock "EUR"      , \t -> 0.9  + 0.1 * sin (toDayCount t))]
                     [(Rate "EURIBOR3M" , \t -> 0.05 + 0.01 * sin (toDayCount t / 10))
@@ -66,6 +78,10 @@ mds2 t = initMds    [(Stock "GOLD"     , const 1.58)
 -- TODO: Add a "fixing" function that just maps the "var (\r -> e)" to "const (var r)"
 -- => somehow we could transform the product given some indices
 
+-- TODO: Add "compression" function (scale could be grouped, etc.)
+
+-- TODO: enhance the notion of time values to look into the past
+
 -- TODO - Bring parallelism in the monad as well
 
 
@@ -75,7 +91,7 @@ main :: IO ()
 main = do
     t <- getCurrentTime
     mapM_ print $ do
-        prod <- [prod1, prod2] <*> [t]
+        prod <- [testP, bond1, bond2, simpleOption] <*> [t]
         mds  <- [mds1, mds2] <*> [t]
         return $ withMarketData mds (evalProduct prod)
 

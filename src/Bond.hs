@@ -25,7 +25,7 @@ data BondInfo = BondInfo {
 
 data PeriodInfo = PeriodInfo {
       startDate     :: FinDate
-    , gap           :: Integer  -- ^ in days
+    , period        :: Shifter
     , periodCount   :: Integer
     } deriving(Show, Eq, Ord)
 
@@ -34,16 +34,16 @@ buy :: BondInfo -> PeriodInfo -> FinProduct
 buy = create
 
 sell :: BondInfo -> PeriodInfo -> FinProduct
-sell bi = create bi { nominal = -1 * nominal bi }
+sell bi pi = give (create bi pi)
 
 
 -- | Private:
 
 lastDate :: PeriodInfo -> FinDate
-lastDate PeriodInfo{..} = addDay startDate (gap * periodCount)
+lastDate PeriodInfo{..} = addDay startDate (period * periodCount)
 
 midDates :: PeriodInfo -> [FinDate]
-midDates PeriodInfo{..} = addDay startDate . (gap *) <$> [1..periodCount-1]
+midDates PeriodInfo{..} = addDay startDate . (period *) <$> [1..periodCount-1]
 
 create :: BondInfo -> PeriodInfo -> FinProduct
 create BondInfo{..} p =

@@ -61,9 +61,8 @@ stockRate s1 s2 t = (/) <$> stock s1 t <*> stock s2 t
 trn :: Double -> FinDate -> String -> FinProduct
 trn qty date instr = scale (cst qty) (Tangible date (Stock instr))
 
-scale :: Quantity -> FinProduct -> FinProduct           -- TODO: might be space efficient, but leads to several evals
+scale :: Quantity -> FinProduct -> FinProduct
 scale _ Empty           = Empty
-scale q (Compose r ps)  = Compose r (scale q <$> ps)
 scale q (Scale q' p)    = Scale (q * q') p
 scale q p               = Scale q p
 

@@ -91,6 +91,7 @@ mds2 t = initMds    [(Stock "GOLD"     , const 1.58)
 main :: IO ()
 main = do
     t <- getCurrentTime
+    print (testP t)
     mapM_ print $ do
         prod <- [testP, bond1, bond2, simpleOption] <*> [t]
         mds  <- [mds1, mds2] <*> [t]

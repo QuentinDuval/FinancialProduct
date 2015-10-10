@@ -40,6 +40,14 @@ instance Monoid FinProduct where
     mappend a b = AllOf [a, b]
     mconcat = AllOf
 
+instance Show FinProduct where
+    show (Tangible d s) = "Tangible { date = " ++ show (utctDay d) ++ ", stock = " ++ stockLabel s ++ " }"
+    show (Scale _ p)    = "Scale { " ++ show p ++ " }"
+    show (AllOf ps)     = "AllOf { " ++ show ps ++ " }"
+    show (FirstOf _ ps) = "FirstOf { " ++ show ps ++ " }"
+    show (BestOf s ps)  = "BestOf { ref = " ++ show (stockLabel s) ++ ", " ++ show ps ++ " }"
+    show _              = ""
+
 
 -- | Combinators
 

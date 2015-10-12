@@ -8,7 +8,7 @@ import Control.Monad
 
 -- | Helpful combinators to work on monadic values
 
-(.>.), (.<.), (.==.), (./=.), (.<=.), (.>=.) :: (Applicative m) => m Double -> m Double -> m Bool
+(.>.), (.<.), (.==.), (./=.), (.<=.), (.>=.) :: (Applicative m, Ord a) => m a -> m a -> m Bool
 (.>.)   = liftA2 (>)
 (.<.)   = liftA2 (<)
 (.==.)  = liftA2 (==)

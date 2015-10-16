@@ -81,16 +81,25 @@ instance (Monad m) => Monad (EvalProd m) where
 
 -- | Wrapped access to the monad logic
 
+retrieve :: (Monad m, Ord key) => Cached m key res -> key -> FinDate -> m (Result res, Cached m key res)
+retrieve cached key t =
+    case M.lookup (key, t) (cache cached) of
+        Just res -> pure (res, cached)
+        Nothing -> do
+            res <- access cached key t
+            let newCache = M.insert (key, t) res (cache cached)
+            let newCached = cached { cache = newCache }
+            pure (res, newCached)
+
 getStock :: (Monad m) => Stock -> FinDate -> EvalProd m Double
 getStock s t = EvalProd $ \env -> do
-    let cacheState = cache (stockAccess env)
-    case M.lookup (s, t) cacheState of
-        Just res -> pure (res, env)
-        Nothing -> do
-            res <- access (stockAccess env) s t
-            let newCache = M.insert (s, t) res cacheState
-            let env' = env { stockAccess = (stockAccess env) { cache = newCache } }
-            pure (res, env')
+    (res, newAccess) <- retrieve (stockAccess env) s t
+    pure (res, env { stockAccess = newAccess })
+
+getRate :: (Monad m) => Rate -> FinDate -> EvalProd m Double
+getRate s t = EvalProd $ \env -> do
+    (res, newAccess) <- retrieve (rateAccess env) s t
+    pure (res, env { rateAccess = newAccess })
 
 
 -- | Test function
@@ -103,7 +112,7 @@ testEvalProd = do
 
     t <- getCurrentTime
     res <- resultWithEnv env $
-        sin $ getStock (Stock "USD") t + getStock (Stock "EUR") t
+        sin (getStock (Stock "USD") t) + getStock (Stock "EUR") t * getRate (Rate "LIBOR") t
 
     print res
 

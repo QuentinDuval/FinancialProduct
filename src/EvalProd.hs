@@ -1,4 +1,10 @@
 module EvalProd (
+    EvalEnv,
+    newEnv,
+    EvalProd,
+    resultWithEnv,
+    getStock,
+    getRate,
     testEvalProd,
 ) where
 
@@ -13,6 +19,7 @@ import Utils.Time
 
 
 
+-- | Private:
 -- | Result of the evaluation of a market data value
 
 data Result a
@@ -34,11 +41,10 @@ instance Monad Result where
     Fail s >>= _ = Fail s
 
 
+-- | Abstract:
 -- | Environment of evaluation of financial product
 
 type Access m key res = key -> FinDate -> m (Result res)
-type StockCache = M.Map (Stock, FinDate) (Result Double)
-type RateCache  = M.Map (Stock, FinDate) (Result Double)
 
 data Cached m key res = Cached {
     access :: Access m key res,
@@ -50,13 +56,13 @@ data EvalEnv m = EvalEnv {
     rateAccess  :: Cached m Rate  Double
 }
 
-toCached :: Access m key res -> Cached m key res
-toCached a = Cached { access = a, cache = M.empty }
-
 newEnv :: Access m Stock Double -> Access m Rate Double -> EvalEnv m
 newEnv s r = EvalEnv (toCached s) (toCached r)
+    where
+        toCached a = Cached { access = a, cache = M.empty }
 
 
+-- | Abstract:
 -- | Evaluation monad for the financial product
 
 data EvalProd m a = EvalProd {

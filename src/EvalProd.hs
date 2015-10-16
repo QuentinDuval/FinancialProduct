@@ -12,12 +12,8 @@ import Utils.Monad
 import Utils.Time
 
 
-type StockCache = M.Map (Stock, FinDate) (Result Double)
 
-data EvalEnv m = EvalEnv {
-    stockAccess :: Stock -> FinDate -> m (Result Double),
-    stockCache  :: StockCache
-}
+-- | Result of the evaluation of a market data value
 
 data Result a
     = Done a
@@ -28,6 +24,31 @@ instance Functor Result where
     fmap f (Done a) = Done (f a)
     fmap f (Fail s) = Fail s
 
+
+-- | Environment of evaluation of financial product
+
+type Access m key res = key -> FinDate -> m (Result res)
+type StockCache = M.Map (Stock, FinDate) (Result Double)
+type RateCache  = M.Map (Stock, FinDate) (Result Double)
+
+data Cached m key res = Cached {
+    access :: Access m key res,
+    cache  :: M.Map (key, FinDate) (Result res)
+}
+
+data EvalEnv m = EvalEnv {
+    stockAccess :: Cached m Stock Double,
+    rateAccess  :: Cached m Rate  Double
+}
+
+toCached :: Access m key res -> Cached m key res
+toCached a = Cached { access = a, cache = M.empty }
+
+newEnv :: Access m Stock Double -> Access m Rate Double -> EvalEnv m
+newEnv s r = EvalEnv (toCached s) (toCached r)
+
+
+-- | Evaluation monad for the financial product
 
 data EvalProd m a = EvalProd {
     runEvalProd :: EvalEnv m -> m (Result a, EvalEnv m)
@@ -58,32 +79,32 @@ instance (Monad m) => Monad (EvalProd m) where
                     Done a -> runEvalProd (f a) env
 
 
--- | Read some information from the environment
+-- | Wrapped access to the monad logic
 
 getStock :: (Monad m) => Stock -> FinDate -> EvalProd m Double
 getStock s t = EvalProd $ \env -> do
-    let cacheState = stockCache env
+    let cacheState = cache (stockAccess env)
     case M.lookup (s, t) cacheState of
         Just res -> pure (res, env)
         Nothing -> do
-            res <- stockAccess env s t
+            res <- access (stockAccess env) s t
             let newCache = M.insert (s, t) res cacheState
-            let newEnv = env { stockCache = newCache }
-            pure (res, newEnv)
+            let env' = env { stockAccess = (stockAccess env) { cache = newCache } }
+            pure (res, env')
 
 
 -- | Test function
 
 testEvalProd :: IO ()
 testEvalProd = do
+    let env = newEnv
+                (\_ _ -> return (Done 2))
+                (\_ _ -> return (Done 1))
+
     t <- getCurrentTime
-    let env = EvalEnv {
-                stockAccess = \_ _ -> return (Done 2),
-                stockCache  = M.empty }
+    res <- resultWithEnv env $
+        sin $ getStock (Stock "USD") t + getStock (Stock "EUR") t
 
-    res <- resultWithEnv env $ sin $ getStock (Stock "USD") t + getStock (Stock "EUR") t
     print res
-    return ()
-
 
 

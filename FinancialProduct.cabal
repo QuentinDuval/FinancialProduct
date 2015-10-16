@@ -19,6 +19,7 @@ executable FinancialProduct
     hs-source-dirs: src
     other-modules:
         EvalMonad
+        EvalProd
         FinProduct
         Flow
         Listed.Bond

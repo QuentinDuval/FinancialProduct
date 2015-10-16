@@ -8,6 +8,7 @@ import qualified Listed.SimpleOption as Opt
 
 import Data.Monoid
 import EvalMonad
+import EvalProd
 import FinProduct
 import MarketData
 import Utils.Monad
@@ -90,6 +91,7 @@ mds2 t = initMds    [(Stock "GOLD"     , cst 1.58)
 
 main :: IO ()
 main = do
+    testEvalProd
     t <- getCurrentTime
     print (testP t)
     mapM_ print $ do

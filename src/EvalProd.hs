@@ -54,8 +54,11 @@ data EvalProd m a = EvalProd {
     runEvalProd :: EvalEnv m -> m (Result a, EvalEnv m)
 }
 
-resultWithEnv :: (Monad m) => EvalEnv m -> EvalProd m a -> m (Result a)
-resultWithEnv env m = fst <$> runEvalProd m env
+resultWithEnv :: (Monad m) => EvalEnv m -> EvalProd m a -> m (Maybe a)
+resultWithEnv env m = toMaybe . fst <$> runEvalProd m env
+    where
+        toMaybe (Done a) = Just a
+        toMaybe _        = Nothing
 
 
 instance (Monad m) => Functor (EvalProd m) where

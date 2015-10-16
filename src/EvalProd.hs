@@ -19,6 +19,8 @@ import Utils.Time
 
 
 
+-- TODO - Add some way to accumulate requests in the functor + applicative (and access should take list?)
+
 -- | Private:
 -- | Result of the evaluation of a market data value
 

@@ -91,14 +91,14 @@ retrieve cached key t =
             let newCached = cached { cache = newCache }
             pure (res, newCached)
 
-getStock :: (Monad m) => Stock -> FinDate -> EvalProd m Double
+getStock :: (Monad m) => String -> FinDate -> EvalProd m Double
 getStock s t = EvalProd $ \env -> do
-    (res, newAccess) <- retrieve (stockAccess env) s t
+    (res, newAccess) <- retrieve (stockAccess env) (Stock s) t
     pure (res, env { stockAccess = newAccess })
 
-getRate :: (Monad m) => Rate -> FinDate -> EvalProd m Double
+getRate :: (Monad m) => String -> FinDate -> EvalProd m Double
 getRate s t = EvalProd $ \env -> do
-    (res, newAccess) <- retrieve (rateAccess env) s t
+    (res, newAccess) <- retrieve (rateAccess env) (Rate s) t
     pure (res, env { rateAccess = newAccess })
 
 
@@ -111,9 +111,8 @@ testEvalProd = do
                 (\_ _ -> return (Done 1))
 
     t <- getCurrentTime
-    res <- resultWithEnv env $
-        sin (getStock (Stock "USD") t) + getStock (Stock "EUR") t * getRate (Rate "LIBOR") t
-
+    let formula = sin (getStock "USD" t) + getStock "EUR" t * getRate "LIBOR" t
+    res <- resultWithEnv env formula
     print res
 
 

@@ -40,6 +40,21 @@ toUnaryFct Abs = abs
 toUnaryFct Inv = recip
 toUnaryFct Not = not
 
+instance Show (BinaryOp a b c) where
+    show Add  = "Add"
+    show Mult = "Mult"
+    show Or   = "Or"
+    show And  = "And"
+    show IsLess = "IsLess"
+    show IsMore = "IsMore"
+    show IsEqual = "IsEqual"
+
+instance Show (UnaryOp a b) where
+    show Neg = "Neg"
+    show Abs = "Abs"
+    show Inv = "Inv"
+    show Not = "Not"
+
 
 -- | Using type classes
 

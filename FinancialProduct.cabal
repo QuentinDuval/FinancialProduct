@@ -13,8 +13,7 @@ executable FinancialProduct
         base -any,
         containers >=0.5.6.2 && <0.6,
         time >=1.5.0.1 && <1.6,
-        mtl >=2.2.1 && <2.3,
-        data-default >=0.5.3
+        mtl >=2.2.1 && <2.3
     default-language: Haskell2010
     hs-source-dirs: src
     other-modules:

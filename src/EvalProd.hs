@@ -2,31 +2,30 @@ module EvalProd (
     EvalEnv,
     newEnv,
     EvalProd,
+    Result(..),
     resultWithEnv,
     getStock,
     getRate,
-    testEvalProd,
 ) where
 
 
 import Control.Applicative
 import Control.Arrow
 import qualified Data.Map as M
-
 import MarketData
 import Utils.Monad
 import Utils.Time
 
 
-
 -- TODO - Add some way to accumulate requests in the functor + applicative (and access should take list?)
 
--- | Private:
+
 -- | Result of the evaluation of a market data value
 
 data Result a
     = Done a
     | Fail String
+    deriving (Show, Eq, Ord)
 
 instance Functor Result where
     fmap f (Done a) = Done (f a)
@@ -60,22 +59,19 @@ data EvalEnv m = EvalEnv {
 
 newEnv :: Access m Stock Double -> Access m Rate Double -> EvalEnv m
 newEnv s r = EvalEnv (toCached s) (toCached r)
-    where
-        toCached a = Cached { access = a, cache = M.empty }
+    where toCached a = Cached { access = a, cache = M.empty }
+
+-- TODO - Add a new env with dependencies resolving at the beginning
 
 
 -- | Abstract:
 -- | Evaluation monad for the financial product
 
 data EvalProd m a = EvalProd {
-    runEvalProd :: EvalEnv m -> m (Result a, EvalEnv m)
-}
+    runEvalProd :: EvalEnv m -> m (Result a, EvalEnv m) }
 
-resultWithEnv :: (Monad m) => EvalEnv m -> EvalProd m a -> m (Maybe a)
-resultWithEnv env m = toMaybe . fst <$> runEvalProd m env
-    where
-        toMaybe (Done a) = Just a
-        toMaybe _        = Nothing
+resultWithEnv :: (Monad m) => EvalEnv m -> EvalProd m a -> m (Result a)
+resultWithEnv env m = fst <$> runEvalProd m env
 
 
 instance (Monad m) => Functor (EvalProd m) where
@@ -95,21 +91,19 @@ instance (Monad m) => Monad (EvalProd m) where
     m >>= f = EvalProd $ \env -> do
                 (a', env2) <- runEvalProd m env
                 case a' of
-                    Fail s -> pure (Fail s, env2)
                     Done a -> runEvalProd (f a) env
+                    Fail s -> pure (Fail s, env2)
+
+instance (Monad m) => Alternative (EvalProd m) where
+    empty   = EvalProd $ \env -> pure (Fail "empty", env)
+    a <|> b = EvalProd $ \env -> do
+                (a', env2) <- runEvalProd a env
+                case a' of
+                    Done a -> pure (Done a, env2)
+                    Fail s -> runEvalProd b env2 -- Profit of the caching of the first
 
 
 -- | Wrapped access to the monad logic
-
-retrieve :: (Monad m, Ord key) => Cached m key res -> key -> FinDate -> m (Result res, Cached m key res)
-retrieve cached key t =
-    case M.lookup (key, t) (cache cached) of
-        Just res -> pure (res, cached)
-        Nothing -> do
-            res <- access cached key t
-            let newCache = M.insert (key, t) res (cache cached)
-            let newCached = cached { cache = newCache }
-            pure (res, newCached)
 
 getStock :: (Monad m) => String -> FinDate -> EvalProd m Double
 getStock s t = EvalProd $ \env -> do
@@ -122,17 +116,16 @@ getRate s t = EvalProd $ \env -> do
     pure (res, env { rateAccess = newAccess })
 
 
--- | Test function
+-- | Private
 
-testEvalProd :: IO ()
-testEvalProd = do
-    let env = newEnv
-                (\_ _ -> return (Done 2))
-                (\_ _ -> return (Done 1))
-
-    t <- getCurrentTime
-    let formula = sin (getStock "USD" t) + getStock "EUR" t * getRate "LIBOR" t
-    res <- resultWithEnv env formula
-    print res
+retrieve :: (Monad m, Ord key) => Cached m key res -> key -> FinDate -> m (Result res, Cached m key res)
+retrieve cached key t =
+    case M.lookup (key, t) (cache cached) of
+        Just res -> pure (res, cached)
+        Nothing -> do
+            res <- access cached key t
+            let newCache = M.insert (key, t) res (cache cached)
+            let newCached = cached { cache = newCache }
+            pure (res, newCached)
 
 

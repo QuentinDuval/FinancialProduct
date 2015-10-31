@@ -5,9 +5,9 @@ module Listed.SimpleOption (
 ) where
 
 import Data.Monoid((<>))
-import EvalMonad
 import FinProduct
 import Flow
+import Observable
 import Utils.Monad
 import Utils.Time
 

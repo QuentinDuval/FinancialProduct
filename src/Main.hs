@@ -6,19 +6,21 @@ module Main (
 import qualified Listed.Bond as Bond
 import qualified Listed.SimpleOption as Opt
 
+import Control.Monad.Identity
 import Data.Monoid
-import EvalMonad
 import EvalProd
 import FinProduct
 import MarketData
+import Observable
+import TestMarketData
 import Utils.Monad
 import Utils.Time
 
 
 -- | Simple test products
 
-testP :: FinDate -> FinProduct
-testP t =
+testP1 :: FinDate -> FinProduct
+testP1 t =
     scale (cst 1.0 + stockRate "USD" "EUR" t) $
         mconcat [
             bestOfBy (Stock "USD")                       [trn 120 t "EUR" , trn 120 t "USD"],
@@ -26,6 +28,9 @@ testP t =
             scale    (stock "GOLD" t * rate "LIBOR" t)   (trn 0.9 t "USD"),
             eitherP  (stock "GOLD" t .<. cst 10.0)       (trn 12 t "SILV") (trn 10 t "GOLD"),
             eitherP  (stock "GOLD" t .>. stock "SILV" t) (trn 10 t "GOLD") (trn 10 t "SILV")]
+
+testP2 :: FinDate -> FinProduct
+testP2 t = scale (stock "UNKNOWN" t) (trn 1 t "USD") <> testP1 t
 
 bond :: (FinDate -> Quantity) -> FinDate -> FinProduct
 bond couponRate t = Bond.buy bondInfo periods
@@ -51,21 +56,21 @@ simpleOption t = Opt.create optInfo t
 
 -- | Two test market data sets
 
-mds1 :: FinDate -> MarketData
-mds1 t = initMds    [(Stock "GOLD"     , cst 15.8)
-                    ,(Stock "SILV"     , cst 11.3)
-                    ,(Stock "USD"      , cst 1.0)
-                    ,(Stock "EUR"      , cst 1.1 + cst 0.1 * sin toDayCount)]
-                    [(Rate "EURIBOR3M" , cst 0.05)
-                    ,(Rate "LIBOR"     , cst 0.06)]
+mds1 :: FinDate -> TestMarketData
+mds1 t = initMds    [(Stock "GOLD"     , const 15.8)
+                    ,(Stock "SILV"     , const 11.3)
+                    ,(Stock "USD"      , const 1.0)
+                    ,(Stock "EUR"      , \t -> 1.1 + 0.1 * sin (toDayCount t) )]
+                    [(Rate "EURIBOR3M" , const 0.05)
+                    ,(Rate "LIBOR"     , const 0.06)]
 
-mds2 :: FinDate -> MarketData
-mds2 t = initMds    [(Stock "GOLD"     , cst 1.58)
-                    ,(Stock "SILV"     , cst 17.3)
-                    ,(Stock "USD"      , cst 1.0)
-                    ,(Stock "EUR"      , cst 0.9 + cst 0.1 * sin toDayCount)]
-                    [(Rate "EURIBOR3M" , cst 0.05 + cst 0.01 * \t -> sin (toDayCount t / 10))
-                    ,(Rate "LIBOR"     , cst 0.06 + cst 0.01 * \t -> cos (toDayCount t / 12))]
+mds2 :: FinDate -> TestMarketData
+mds2 t = initMds    [(Stock "GOLD"     , const 1.58)
+                    ,(Stock "SILV"     , const 17.3)
+                    ,(Stock "USD"      , const 1.0)
+                    ,(Stock "EUR"      , \t -> 0.9  + 0.1 * sin (toDayCount t) )]
+                    [(Rate "EURIBOR3M" , \t -> 0.05 + 0.01 * sin (toDayCount t / 10) )
+                    ,(Rate "LIBOR"     , \t -> 0.06 + 0.01 * cos (toDayCount t / 12) )]
 
 
 -- TODO: The description of the financial product is too entangled with the monad
@@ -91,11 +96,28 @@ mds2 t = initMds    [(Stock "GOLD"     , cst 1.58)
 
 main :: IO ()
 main = do
-    testEvalProd
-    t <- getCurrentTime
-    print (testP t)
+    t <- utctDay <$> getCurrentTime
+    print (testP1 t)
+
+    putStrLn "\nTest of evaluation of products:"
+    let testEval prod mds = runIdentity $ resultWithEnv (testMdsAccess mds) (evalProduct prod)
     mapM_ print $ do
-        prod <- [testP, bond1, bond2, simpleOption] <*> [t]
+        prod <- [testP1, testP2, bond1, bond2, simpleOption] <*> [t]
         mds  <- [mds1, mds2] <*> [t]
-        return $ withMarketData mds (evalProduct prod)
+        return $ testEval prod mds
+
+    putStrLn "\nTest of fixing of observables:"
+    let testObs obsValue = runIdentity $ resultWithEnv (testMdsAccess $ mds1 t) (fixing obsValue)
+    mapM_ print $ testObs <$> [cst 1.0, stock "EUR" t, rate "EURIBOR3M" t, stock "UNKNOWN" t, rate "UNKNOWN" t,
+                               cst 1.0 + stock "EUR" t, stock "EUR" t * rate "EURIBOR3M" t, stockRate "EUR" "UNKNOWN" t]
+    mapM_ print $ testObs <$> [cst 1.0 .<. stock "EUR" t, stock "EUR" t .==. rate "EURIBOR3M" t,
+                               (stock "GOLD" t .>. stock "SILV" t) .&&. cst True .||. cst False]
+
+    putStrLn "\nTest of fixing of products:"
+    let testFix prod mds = runIdentity $ resultWithEnv (testMdsAccess mds) (fixProduct prod)
+    mapM_ print $ do
+        prod <- [testP1, testP2] <*> [t]
+        mds  <- [mds1, mds2] <*> [t]
+        return $ testFix prod mds
+
 

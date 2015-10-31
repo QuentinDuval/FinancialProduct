@@ -86,11 +86,12 @@ main = do
     print (testP1 t)
 
     putStrLn "\nTest of evaluation of products:"
-    let testEval prod mds = runIdentity $ resultWithEnv (testMdsAccess mds) (evalProduct prod)
+    let testEval prod mds f = runIdentity $ resultWithEnv (testMdsAccess mds) (f prod)
     mapM_ print $ do
         prod <- [testP1, testP2, bond1, bond2, simpleOption] <*> [t]
         mds  <- [mds1, mds2] <*> [t]
-        return $ testEval prod mds
+        f <- [evalProduct, evalKnownFlows]
+        return $ testEval prod mds f
 
     putStrLn "\nTest of fixing of observables:"
     let testObs obsValue = runIdentity $ resultWithEnv (testMdsAccess $ mds1 t) (fixing obsValue)

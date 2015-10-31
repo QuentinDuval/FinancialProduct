@@ -79,14 +79,18 @@ evalProduct :: (Monad m) => FinProduct -> EvalProd m [Flow]
 evalProduct Empty           = return []
 evalProduct (Tangible d i)  = return [Flow 1 d i]
 evalProduct (AllOf ps)      = concat <$> mapM evalProduct ps
-evalProduct (BestOf ref ps) = snd <$> findBestProduct ref ps
+evalProduct (BestOf ref ps) = fmap snd (findBestProduct ref ps)
 evalProduct (FirstOf cs ps) = findFirstProduct cs ps >>= evalProduct
 evalProduct (Scale qty p)   = do
     val <- evalObs qty
     flows <- evalProduct p
     return $ overFlow (*val) <$> flows
 
--- TODO - make an evaluation that returns only the known flows?
+evalKnownFlows :: (Monad m) => FinProduct -> EvalProd m [Flow]
+evalKnownFlows (AllOf ps)      = concat <$> mapM evalKnownFlows ps
+evalKnownFlows (BestOf ref ps) = fmap snd (findBestProduct ref ps) <|> pure []
+evalKnownFlows (FirstOf cs ps) = (findFirstProduct cs ps >>= evalKnownFlows) <|> pure []
+evalKnownFlows p               = evalProduct p <|> pure []
 
 
 -- | Fixing of the production of financial products

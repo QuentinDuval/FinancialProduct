@@ -2,7 +2,12 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE DeriveGeneric #-}
+--{-# LANGUAGE DeriveDataTypeable #-}
 module ObservableExperiments where
+
+import Data.Typeable
+--import Data.Generics
 
 
 -- | Experiments
@@ -10,6 +15,9 @@ module ObservableExperiments where
 -- TODO - Because it is so abstract, Observables cannot be saved in DB
 -- => Only the product on top of it can be saved!
 -- This module experiments with some ways to fix this.
+
+-- TODO - Track: typeable make it possible to compare types
+-- => It should be possible to fill a map with repr to type and invert
 
 
 -- | Usign concrete types to represent the operations
@@ -19,6 +27,7 @@ data BinaryOp a b c where
     Or, And         ::             BinaryOp Bool Bool Bool
     IsLess, IsMore  :: (Ord a)  => BinaryOp a a Bool
     IsEqual         :: (Eq a)   => BinaryOp a a Bool
+    deriving (Typeable)
 
 data UnaryOp a b where
     Neg, Abs, Sign  :: (Num a)          => UnaryOp a a
@@ -57,41 +66,51 @@ instance Show (UnaryOp a b) where
 
 
 -- | Using type classes
+-- Isn't it pretty similar? In the end, the type classes are more easy to extend
 
---class IBinaryOp f where
---    type ArgT1 f
---    type ArgT2 f
---    type ResT  f
---    marshall    :: f -> String
---    unmarshall  :: String -> f
---    apply       :: f -> ArgT1 f -> ArgT2 f -> ResT f
+class (Typeable f) => IBinaryOp f where
+    type ArgT1 f
+    type ArgT2 f
+    type ResT  f
+    toString :: f -> String
+    toString = show . typeOf
+    apply :: f -> ArgT1 f -> ArgT2 f -> ResT f
 
---data BinaryOpBox a b c  where
---    BinaryOpBox :: (IBinaryOp f) => f -> BinaryOpBox (ArgT1 f) (ArgT2 f) (ResT f)
+data BinaryOpBox a b c  where
+    BinaryOpBox :: (IBinaryOp f) => f -> BinaryOpBox (ArgT1 f) (ArgT2 f) (ResT f)
+    deriving (Typeable)
 
---instance IBinaryOp (BinaryOpBox a b c) where
---    type ArgT1 (BinaryOpBox a b c) = a
---    type ArgT2 (BinaryOpBox a b c) = b
---    type ResT  (BinaryOpBox a b c) = c
---    marshall (BinaryOpBox f) = marshall f
---    unmarshall s = BinaryOpBox (unmarshall s) -- Cannot write it
---    apply (BinaryOpBox f) a b = apply f a b
+instance (Typeable a, Typeable b, Typeable c) => IBinaryOp (BinaryOpBox a b c) where
+    type ArgT1 (BinaryOpBox a b c) = a
+    type ArgT2 (BinaryOpBox a b c) = b
+    type ResT  (BinaryOpBox a b c) = c
+    toString (BinaryOpBox f) = toString f
+    apply (BinaryOpBox f) a b = apply f a b
 
---data Addition a = Addition deriving (Show, Read)
+data Addition a = Addition deriving (Show, Typeable)
+
+instance (Typeable a, Num a) => IBinaryOp (Addition a) where
+    type ArgT1 (Addition a) = a
+    type ArgT2 (Addition a) = a
+    type ResT  (Addition a) = a
+    apply _  = (+)
+
+
+-- Another attempt?
+
+--data BinaryOp' a b c = BinaryOp' {
+--    apply' :: a -> b -> c,
+--    toString' :: String
+--} deriving (Typeable)
 --
---instance (Num a) => IBinaryOp (Addition a) where
---    type ArgT1 (Addition a) = a
---    type ArgT2 (Addition a) = a
---    type ResT  (Addition a) = a
---    marshall = show
---    unmarshall = read -- This is rather useless for unmarshalling - better make a correspondance in other side
---    apply _ = (+)
+--instance IBinaryOp (BinaryOp' a b c) where
+--    type ArgT1 (BinaryOp' a b c) = a
+--    type ArgT2 (BinaryOp' a b c) = b
+--    type ResT  (BinaryOp' a b c) = c
+--    toString (BinaryOp' _ s) = s
+--    apply (BinaryOp' f _) a b = f a b
 
---data BinaryOp2 a b c = BinaryOp2 {
---    apply2 :: a -> b -> c,
---    fctId  :: Int
---} -- Put that in a map int -> binaryOp2 (and add a representation)
---
+
 --data ObsValue a where
 --    BiFct :: (IBinaryOp f, ResT f ~ c) => { binaryOp' :: f,   arg1' :: ArgT1 f,  arg2' :: ArgT2 f  } -> ObsValue c
 --

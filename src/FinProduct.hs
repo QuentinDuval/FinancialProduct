@@ -49,14 +49,14 @@ stock = ObsStock
 rate  = ObsRate
 
 stockRate :: String -> String -> FinDate -> Quantity    -- TODO: Try to have different kind of rates instead
-stockRate s1 s2 t = liftOp2 (/) (stock s1 t) (stock s2 t)
+stockRate s1 s2 t = stock s1 t / stock s2 t
 
 trn :: Double -> FinDate -> String -> FinProduct
 trn qty date instr = scale (cst qty) (Tangible date (Stock instr))
 
 scale :: Quantity -> FinProduct -> FinProduct
 scale _ Empty           = Empty
-scale q (Scale q' p)    = Scale (liftOp2 (*) q q') p    -- TODO: optimize in case the observable is a constant
+scale q (Scale q' p)    = Scale (q * q') p    -- TODO: optimize in case the observable is a constant
 scale q p               = Scale q p
 
 send, give :: FinProduct -> FinProduct

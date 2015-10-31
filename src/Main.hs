@@ -73,21 +73,7 @@ mds2 t = initMds    [(Stock "GOLD"     , const 1.58)
                     ,(Rate "LIBOR"     , \t -> 0.06 + 0.01 * cos (toDayCount t / 12) )]
 
 
--- TODO: The description of the financial product is too entangled with the monad
--- In fact, we do not need the monad to contain the market data, but just to encapsulate the notion of observable?
-
--- TODO - Add dates to the indexes as well (not necessarily correlated with the dates of the flows)
--- Find a way to add the dates for indices:
--- * A map String -> (FinDate -> Double) might work (but does not allow side effects)
--- * Then to do a simulation, do provide several MarketData generated separately?
--- * Have a similar map for the volatilities?
-
--- TODO: Add a "fixing" function that just maps the "var (\r -> e)" to "const (var r)"
--- => somehow we could transform the product given some indices
-
 -- TODO: Add "compression" function (scale could be grouped, etc.)
-
--- TODO: enhance the notion of time values to look into the past
 
 -- TODO - Bring parallelism in the monad as well
 

@@ -1,6 +1,7 @@
-module Main (
+module TestMain (
     main
 ) where
+
 
 
 main :: IO ()

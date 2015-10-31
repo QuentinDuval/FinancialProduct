@@ -9,10 +9,11 @@ import MarketData
 import Utils.Time
 
 
+-- Experiments
+import ObservableExperiments
+
 
 -- | Data type to represent observable values
-
--- TODO - Because it is so abstract, it cannot be saved in DB => Only the product on top of it can be saved!
 
 data Observable a where
     ObsConstant :: { obsConst :: a                                                              } -> Observable a

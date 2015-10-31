@@ -25,6 +25,7 @@ executable FinancialProduct
         Listed.SimpleOption
         MarketData
         Observable
+        ObservableExperiments
         TestMarketData
         Utils.Monad
         Utils.Time

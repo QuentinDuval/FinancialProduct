@@ -1,3 +1,4 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -93,7 +94,7 @@ instance (Typeable a, Num a) => IBinaryOp (Addition a) where
     type ArgT2 (Addition a) = a
     type ResT  (Addition a) = a
     toString t = show (typeOf t)
-    apply _  = (+)
+    apply _    = (+)
 
 
 -- Another attempt?
@@ -115,6 +116,12 @@ instance Show (BinaryOp' a b c) where
 
 registerOp :: (Typeable a) => a -> (b -> c -> d) -> BinaryOp' b c d
 registerOp t f = BinaryOp' { apply' = f, toString' = show (typeOf t) }
+
+additionOp :: (Typeable a, Num a) => Addition a -> BinaryOp' a a a
+additionOp t = registerOp t (+)
+
+additionOp' :: BinaryOp' Double Double Double
+additionOp' = registerOp (Addition :: Addition Double) (+)
 
 
 --data ObsValue a where

@@ -4,6 +4,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE PolyKinds #-}
 --{-# LANGUAGE DeriveDataTypeable #-}
 module ObservableExperiments where
 
@@ -122,6 +123,35 @@ additionOp t = registerOp t (+)
 
 additionOp' :: BinaryOp' Double Double Double
 additionOp' = registerOp (Addition :: Addition Double) (+)
+
+
+-- | With type families?
+
+--data family   GMap k              :: * -> *
+--data instance GMap (Either a b) v = GMapEither (GMap a v) (GMap b v)
+
+--data family Operation e
+--data instance Operation (Addition a) = (+)
+
+data AdditionT
+
+add :: (Num a) => a -> a -> a
+add = (+)
+
+data family OpReprT a
+data instance OpReprT add = AdditionT
+
+--class IOp e where
+--    data Operation e
+--
+--instance IOp ((+) :: a -> a -> a) where
+--    data Operation (+) = AdditionT a
+
+--instance (Num a) => IOp (Addition a) where
+--    data Operation (Addition a) = (+)
+
+--applyByFamily :: (IOp op) => op -> a -> a -> a
+--applyByFamily f b c = (Operation f) b c
 
 
 --data ObsValue a where

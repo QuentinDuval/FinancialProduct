@@ -113,8 +113,8 @@ instance IBinaryOp (BinaryOp' a b c) where
 instance Show (BinaryOp' a b c) where
     show = toString'
 
-makeBinaryOp :: (Typeable a) => a -> (b -> c -> d) -> BinaryOp' b c d
-makeBinaryOp t f = BinaryOp' { apply' = f, toString' = show (typeOf t) }
+registerOp :: (Typeable a) => a -> (b -> c -> d) -> BinaryOp' b c d
+registerOp t f = BinaryOp' { apply' = f, toString' = show (typeOf t) }
 
 
 --data ObsValue a where

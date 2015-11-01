@@ -77,16 +77,16 @@ class IBinaryOp f where
 
 data BinaryOpBox a b c  where
     BinaryOpBox :: (IBinaryOp f) => f -> BinaryOpBox (ArgT1 f) (ArgT2 f) (ResT f)
-    deriving (Typeable)
 
-instance (Typeable a, Typeable b, Typeable c) => IBinaryOp (BinaryOpBox a b c) where
+instance IBinaryOp (BinaryOpBox a b c) where
     type ArgT1 (BinaryOpBox a b c) = a
     type ArgT2 (BinaryOpBox a b c) = b
     type ResT  (BinaryOpBox a b c) = c
     toString (BinaryOpBox f) = toString f
     apply (BinaryOpBox f) a b = apply f a b
 
-data Addition a = Addition deriving (Show, Typeable)
+data Addition a = Addition
+    deriving (Show, Typeable)
 
 instance (Typeable a, Num a) => IBinaryOp (Addition a) where
     type ArgT1 (Addition a) = a
@@ -99,7 +99,7 @@ instance (Typeable a, Num a) => IBinaryOp (Addition a) where
 -- Another attempt?
 
 data BinaryOp' a b c = BinaryOp' {
-    apply' :: a -> b -> c,
+    apply'    :: a -> b -> c,
     toString' :: String
 }
 
@@ -109,6 +109,9 @@ instance IBinaryOp (BinaryOp' a b c) where
     type ResT  (BinaryOp' a b c) = c
     toString (BinaryOp' _ s) = s
     apply (BinaryOp' f _) a b = f a b
+
+instance Show (BinaryOp' a b c) where
+    show = toString'
 
 makeBinaryOp :: (Typeable a) => a -> (b -> c -> d) -> BinaryOp' b c d
 makeBinaryOp t f = BinaryOp' { apply' = f, toString' = show (typeOf t) }

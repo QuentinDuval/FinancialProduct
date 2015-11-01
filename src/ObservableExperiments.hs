@@ -68,13 +68,12 @@ instance Show (UnaryOp a b) where
 -- | Using type classes
 -- Isn't it pretty similar? In the end, the type classes are more easy to extend
 
-class (Typeable f) => IBinaryOp f where
+class IBinaryOp f where
     type ArgT1 f
     type ArgT2 f
     type ResT  f
     toString :: f -> String
-    toString = show . typeOf
-    apply :: f -> ArgT1 f -> ArgT2 f -> ResT f
+    apply    :: f -> ArgT1 f -> ArgT2 f -> ResT f
 
 data BinaryOpBox a b c  where
     BinaryOpBox :: (IBinaryOp f) => f -> BinaryOpBox (ArgT1 f) (ArgT2 f) (ResT f)
@@ -93,22 +92,26 @@ instance (Typeable a, Num a) => IBinaryOp (Addition a) where
     type ArgT1 (Addition a) = a
     type ArgT2 (Addition a) = a
     type ResT  (Addition a) = a
+    toString t = show (typeOf t)
     apply _  = (+)
 
 
 -- Another attempt?
 
---data BinaryOp' a b c = BinaryOp' {
---    apply' :: a -> b -> c,
---    toString' :: String
---} deriving (Typeable)
---
---instance IBinaryOp (BinaryOp' a b c) where
---    type ArgT1 (BinaryOp' a b c) = a
---    type ArgT2 (BinaryOp' a b c) = b
---    type ResT  (BinaryOp' a b c) = c
---    toString (BinaryOp' _ s) = s
---    apply (BinaryOp' f _) a b = f a b
+data BinaryOp' a b c = BinaryOp' {
+    apply' :: a -> b -> c,
+    toString' :: String
+}
+
+instance IBinaryOp (BinaryOp' a b c) where
+    type ArgT1 (BinaryOp' a b c) = a
+    type ArgT2 (BinaryOp' a b c) = b
+    type ResT  (BinaryOp' a b c) = c
+    toString (BinaryOp' _ s) = s
+    apply (BinaryOp' f _) a b = f a b
+
+makeBinaryOp :: (Typeable a) => a -> (b -> c -> d) -> BinaryOp' b c d
+makeBinaryOp t f = BinaryOp' { apply' = f, toString' = show (typeOf t) }
 
 
 --data ObsValue a where

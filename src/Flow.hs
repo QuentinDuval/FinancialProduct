@@ -37,8 +37,8 @@ overFlow modifier f = f { flow = modifier (flow f) }
 
 convert :: (Monad m) => Stock -> Flow -> EvalProd m Flow
 convert newInstr f@Flow{..} = do
-    v1 <- evalObs $ ObsStock (stockLabel flowInstr) date
-    v2 <- evalObs $ ObsStock (stockLabel newInstr) date
+    v1 <- evalObs $ StockObs (stockLabel flowInstr) date
+    v2 <- evalObs $ StockObs (stockLabel newInstr) date
     return $ f { flow = v1 / v2 * flow, flowInstr = newInstr }
 
 

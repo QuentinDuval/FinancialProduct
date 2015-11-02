@@ -7,9 +7,9 @@ module Listed.Bond (
 ) where
 
 import Data.Monoid((<>))
-import FinProduct
 import Flow
 import Observable
+import Observable.FinancialProduct
 import Utils.Time
 
 
@@ -19,7 +19,7 @@ import Utils.Time
 
 data BondInfo = BondInfo {
       nominal       :: Double
-    , couponRate    :: FinDate -> Quantity
+    , couponRate    :: FinDate -> ObsQuantity
     , currency      :: String
     }
 

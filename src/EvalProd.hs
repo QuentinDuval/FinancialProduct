@@ -17,9 +17,6 @@ import Utils.Monad
 import Utils.Time
 
 
--- TODO - Add some way to accumulate requests in the functor + applicative (and access should take list?)
-
-
 -- | Result of the evaluation of a market data value
 
 data Result a
@@ -62,6 +59,7 @@ newEnv s r = EvalEnv (toCached s) (toCached r)
     where toCached a = Cached { access = a, cache = M.empty }
 
 -- TODO - Add a new env with dependencies resolving at the beginning
+-- TODO - Add some way to accumulate requests in the functor + applicative (and access should take list?)
 
 
 -- | Abstract:

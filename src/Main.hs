@@ -9,10 +9,11 @@ import qualified Listed.SimpleOption as Opt
 import Control.Monad.Identity
 import Data.Monoid
 import EvalProd
-import FinProduct
 import MarketData
 import Observable
+import Observable.FinancialProduct
 import TestMarketData
+import Utils.Foldable
 import Utils.Monad
 import Utils.Time
 
@@ -32,7 +33,7 @@ testP1 t =
 testP2 :: FinDate -> FinProduct
 testP2 t = scale (stock "UNKNOWN" t) (trn 1 t "USD") <> testP1 t
 
-bond :: (FinDate -> Quantity) -> FinDate -> FinProduct
+bond :: (FinDate -> ObsQuantity) -> FinDate -> FinProduct
 bond couponRate t = Bond.buy bondInfo periods
     where
         periods  = Bond.PeriodInfo { Bond.startDate = t, Bond.period = 10,      Bond.periodCount = 3 }
@@ -72,10 +73,20 @@ mds2 t = initMds    [(Stock "GOLD"     , const 1.58)
                     [(Rate "EURIBOR3M" , \t -> 0.05 + 0.01 * sin (toDayCount t / 10) )
                     ,(Rate "LIBOR"     , \t -> 0.06 + 0.01 * cos (toDayCount t / 12) )]
 
-
+-- TODO: Write a small main loop that reads the market data as input, then ask for pricing of products?
+--       And give some example functions to show the things.
+-- TODO: Remove date from tangible, and allow to set / shift date
+-- TODO: Try to represent the notion of rights? (rights to buy, rights to divident, etc.)
+-- TODO: Renamed "FinProduct" to "Flow schedule generator"? Because it is one... or "Payoff"?
+-- TODO: Introduct the BestNOf (2 best products out of 3 for example)
+-- TODO: Make it easy to do simulation of flows
+-- TODO: Apply the discout factors of flows when evaluating "BestOf" => You need the "trend" (financing rate / dividend) + "volatility" in the market
+-- TODO: Persist the products with (Show / Read) => plug that in the main
+-- TODO: Persist with JSON: https://www.fpcomplete.com/school/starting-with-haskell/libraries-and-frameworks/text-manipulation/json
+-- TODO: Model "Asian Option" => based on the average value of the deal
+-- TODO: Model "Best of option" => 3 options at first, one year after, keep the 2 bests, then 1 year after, keep the best, then option
 -- TODO: Add "compression" function (scale could be grouped, etc.)
-
--- TODO - Bring parallelism in the monad as well
+-- TODO: Bring parallelism in the monad as well
 
 
 -- | Run tests
@@ -90,7 +101,7 @@ main = do
     mapM_ print $ do
         prod <- [testP1, testP2, bond1, bond2, simpleOption] <*> [t]
         mds  <- [mds1, mds2] <*> [t]
-        f <- [evalProduct, evalKnownFlows]
+        f <- [evalObs, evalKnownFlows]
         return $ testEval prod mds f
 
     putStrLn "\nTest of fixing of observables:"
@@ -101,7 +112,7 @@ main = do
                                (stock "GOLD" t .>. stock "SILV" t) .&&. cst True .||. cst False]
 
     putStrLn "\nTest of fixing of products:"
-    let testFix prod mds = runIdentity $ resultWithEnv (testMdsAccess mds) (fixProduct prod)
+    let testFix prod mds = runIdentity $ resultWithEnv (testMdsAccess mds) (fixing prod)
     mapM_ print $ do
         prod <- [testP1, testP2] <*> [t]
         mds  <- [mds1, mds2] <*> [t]

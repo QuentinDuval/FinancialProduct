@@ -5,9 +5,9 @@ module Listed.SimpleOption (
 ) where
 
 import Data.Monoid((<>))
-import FinProduct
 import Flow
 import Observable
+import Observable.FinancialProduct
 import Utils.Monad
 import Utils.Time
 
@@ -19,7 +19,7 @@ data OptionInfo = OptionInfo {
       premium   :: FinProduct
     , maturity  :: Shifter
     , strike    :: Double
-    , quantity  :: Quantity
+    , quantity  :: ObsQuantity
     , buyInstr  :: String
     , sellInstr :: String
     }

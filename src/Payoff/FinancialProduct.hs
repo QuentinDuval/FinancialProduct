@@ -3,7 +3,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Observable.FinancialProduct where
+module Payoff.FinancialProduct where
 
 
 import Control.Applicative
@@ -12,10 +12,11 @@ import Data.Function
 import Data.List
 import Data.Monoid
 import EvalProd
-import Flow
+import Payoff.Flow
 import MarketData
 import Observable
 import Utils.Monad
+import Utils.Syntax
 import Utils.Time
 
 
@@ -76,6 +77,9 @@ eitherP p a b = FirstOf [p, cst True] [a, b]
 bestOfBy :: Stock -> [FinProduct] -> FinProduct
 bestOfBy = BestOf
 
+instance IfThenElse ObsPredicate FinProduct where
+    ifThenElse = eitherP
+
 
 -- | Evaluation of the production of financial products
 
@@ -135,6 +139,4 @@ findBestProduct ref ps = do
         return ((p, flows), sum $ fmap flow converted)
     let best = maximumBy (compare `on` snd) evals
     return (fst best)
-
-
 

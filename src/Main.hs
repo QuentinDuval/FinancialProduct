@@ -1,3 +1,4 @@
+{-# LANGUAGE RebindableSyntax #-}
 module Main (
     main
 ) where
@@ -10,11 +11,13 @@ import Control.Monad.Identity
 import Data.Monoid
 import EvalProd
 import MarketData
+import Prelude hiding (ifThenElse)
 import Observable
-import Observable.FinancialProduct
+import Payoff.FinancialProduct
 import TestMarketData
 import Utils.Foldable
 import Utils.Monad
+import Utils.Syntax
 import Utils.Time
 
 
@@ -24,11 +27,11 @@ testP1 :: FinDate -> FinProduct
 testP1 t =
     scale (cst 1.0 + stockRate "USD" "EUR" t) $
         mconcat [
-            bestOfBy (Stock "USD")                       [trn 120 t "EUR" , trn 120 t "USD"],
-            scale    (rate "EURIBOR3M" t + cst 0.33)     (trn 120 t "EUR"),
-            scale    (stock "GOLD" t * rate "LIBOR" t)   (trn 0.9 t "USD"),
-            eitherP  (stock "GOLD" t .<. cst 10.0)       (trn 12 t "SILV") (trn 10 t "GOLD"),
-            eitherP  (stock "GOLD" t .>. stock "SILV" t) (trn 10 t "GOLD") (trn 10 t "SILV")]
+            bestOfBy    (Stock "USD")                       [trn 120 t "EUR" , trn 120 t "USD"],
+            scale       (rate "EURIBOR3M" t + cst 0.33)     (trn 120 t "EUR"),
+            scale       (stock "GOLD" t * rate "LIBOR" t)   (trn 0.9 t "USD"),
+            if stock "GOLD" t .<. cst 10.0       then trn 12 t "SILV" else trn 10 t "GOLD",
+            if stock "GOLD" t .>. stock "SILV" t then trn 10 t "GOLD" else trn 10 t "SILV"]
 
 testP2 :: FinDate -> FinProduct
 testP2 t = scale (stock "UNKNOWN" t) (trn 1 t "USD") <> testP1 t
@@ -73,6 +76,7 @@ mds2 t = initMds    [(Stock "GOLD"     , const 1.58)
                     [(Rate "EURIBOR3M" , \t -> 0.05 + 0.01 * sin (toDayCount t / 10) )
                     ,(Rate "LIBOR"     , \t -> 0.06 + 0.01 * cos (toDayCount t / 12) )]
 
+-- TODO: have a function that computes the discounted P&L as of a date, and use it in the BestOf (add the date)
 -- TODO: Write a small main loop that reads the market data as input, then ask for pricing of products?
 --       And give some example functions to show the things.
 -- TODO: Remove date from tangible, and allow to set / shift date
@@ -95,6 +99,8 @@ main :: IO ()
 main = do
     t <- utctDay <$> getCurrentTime
     print (testP1 t)
+
+    let i = if True then 1 else 0
 
     putStrLn "\nTest of evaluation of products:"
     let testEval prod mds f = runIdentity $ resultWithEnv (testMdsAccess mds) (f prod)

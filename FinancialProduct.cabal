@@ -19,19 +19,21 @@ executable FinancialProduct
     hs-source-dirs: src
     other-modules:
         EvalProd
-        Flow
         Listed.Bond
         Listed.SimpleOption
         MarketData
         Observable
         Observable.Class
         Observable.Dependency
-        Observable.FinancialProduct
         Observable.Predicate
         Observable.Quantity
+        Payoff
+        Payoff.FinancialProduct
+        Payoff.Flow
         TestMarketData
         Utils.Foldable
         Utils.Monad
+        Utils.Syntax
         Utils.Time
     ghc-options: -ferror-spans -O2
 

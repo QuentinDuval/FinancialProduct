@@ -1,5 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
-module Flow where
+module Payoff.Flow where
 
 import EvalProd
 import MarketData
@@ -40,5 +40,8 @@ convert newInstr f@Flow{..} = do
     v1 <- evalObs $ StockObs (stockLabel flowInstr) date
     v2 <- evalObs $ StockObs (stockLabel newInstr) date
     return $ f { flow = v1 / v2 * flow, flowInstr = newInstr }
+
+shiftDate :: (Monad m) => FinDate -> Flow -> EvalProd m Flow
+shiftDate = undefined -- TODO
 
 

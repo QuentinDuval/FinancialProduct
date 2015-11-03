@@ -7,9 +7,8 @@ module Listed.Bond (
 ) where
 
 import Data.Monoid((<>))
-import Flow
 import Observable
-import Observable.FinancialProduct
+import Payoff
 import Utils.Time
 
 

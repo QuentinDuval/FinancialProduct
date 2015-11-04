@@ -4,8 +4,7 @@
 module Observable.Class where
 
 import Data.Maybe
-import EvalProd
-import MarketData
+import Eval
 import Observable.Dependency
 
 

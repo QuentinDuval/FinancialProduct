@@ -1,7 +1,7 @@
 module Observable.Dependency where
 
 import Data.Monoid
-import MarketData
+import Eval.MarketData
 import Utils.Time
 
 

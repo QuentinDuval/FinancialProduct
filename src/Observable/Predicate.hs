@@ -4,8 +4,7 @@ module Observable.Predicate where
 
 import Control.Applicative
 import Data.Monoid
-import EvalProd
-import MarketData
+import Eval
 import Observable.Class
 import Observable.Quantity
 import Utils.Foldable

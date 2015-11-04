@@ -4,13 +4,13 @@ module Main (
 ) where
 
 
-import qualified Listed.Bond as Bond
-import qualified Listed.SimpleOption as Opt
+import Listed.Bond as Bond
+import Listed.AsianOption as AOpt
+import Listed.SimpleOption as Opt
 
 import Control.Monad.Identity
 import Data.Monoid
-import EvalProd
-import MarketData
+import Eval
 import Prelude hiding (ifThenElse)
 import Observable
 import Payoff.FinancialProduct
@@ -26,8 +26,8 @@ import Utils.Time
 testP1 :: FinDate -> FinProduct
 testP1 t =
     scale (cst 1.0 + stockRate "USD" "EUR" t) $
-        mconcat [
-            bestOfBy    (Stock "USD")                       [trn 120 t "EUR" , trn 120 t "USD"],
+        allOf [
+            bestOfBy    (Stock "USD") t                     [trn 120 t "EUR" , trn 120 t "USD"],
             scale       (rate "EURIBOR3M" t + cst 0.33)     (trn 120 t "EUR"),
             scale       (stock "GOLD" t * rate "LIBOR" t)   (trn 0.9 t "USD"),
             if stock "GOLD" t .<. cst 10.0       then trn 12 t "SILV" else trn 10 t "GOLD",
@@ -37,25 +37,36 @@ testP2 :: FinDate -> FinProduct
 testP2 t = scale (stock "UNKNOWN" t) (trn 1 t "USD") <> testP1 t
 
 bond :: (FinDate -> ObsQuantity) -> FinDate -> FinProduct
-bond couponRate t = Bond.buy bondInfo periods
+bond couponRate t = buyBond bondInfo periods
     where
-        periods  = Bond.PeriodInfo { Bond.startDate = t, Bond.period = 10,      Bond.periodCount = 3 }
-        bondInfo = Bond.BondInfo   { Bond.nominal = 10,  Bond.currency = "EUR", Bond.couponRate = couponRate }
+        periods  = PeriodInfo { startDate = t, period = 10,      periodCount = 3 }
+        bondInfo = BondInfo   { nominal = 10,  currency = "EUR", couponRate = couponRate }
 
 bond1, bond2 :: FinDate -> FinProduct
 bond1   = bond $ (+) <$> rate "EURIBOR3M" <*> rate "LIBOR"
 bond2 t = bond (const $ cst 0.05 * stockRate "EUR" "USD" t) t
 
-simpleOption :: FinDate -> FinProduct
-simpleOption t = Opt.create optInfo t
+opt1 :: FinDate -> FinProduct
+opt1 t = simpleOption optInfo t
     where
-        optInfo = Opt.OptionInfo {
-            Opt.premium   = trn 5 t "USD",
-            Opt.maturity  = 5,
-            Opt.strike    = 10,
-            Opt.quantity  = cst 27 * stock "EUR" t,
-            Opt.buyInstr  = "GOLD",
-            Opt.sellInstr = "USD" }
+        optInfo = OptionInfo {
+            premium   = trn 5 t "USD",
+            maturity  = 5,
+            strike    = 10,
+            quantity  = cst 27,
+            buyInstr  = "GOLD",
+            sellInstr = "USD" }
+
+opt2 :: FinDate -> FinProduct
+opt2 t = asianOption (AsianOptionInfo optInfo 1) t
+    where
+        optInfo = OptionInfo {
+            premium   = trn 5 t "USD",
+            maturity  = 5,
+            strike    = 10,
+            quantity  = cst 40,
+            buyInstr  = "GOLD",
+            sellInstr = "USD" }
 
 
 -- | Two test market data sets
@@ -76,7 +87,6 @@ mds2 t = initMds    [(Stock "GOLD"     , const 1.58)
                     [(Rate "EURIBOR3M" , \t -> 0.05 + 0.01 * sin (toDayCount t / 10) )
                     ,(Rate "LIBOR"     , \t -> 0.06 + 0.01 * cos (toDayCount t / 12) )]
 
--- TODO: have a function that computes the discounted P&L as of a date, and use it in the BestOf (add the date)
 -- TODO: Write a small main loop that reads the market data as input, then ask for pricing of products?
 --       And give some example functions to show the things.
 -- TODO: Remove date from tangible, and allow to set / shift date
@@ -105,7 +115,7 @@ main = do
     putStrLn "\nTest of evaluation of products:"
     let testEval prod mds f = runIdentity $ resultWithEnv (testMdsAccess mds) (f prod)
     mapM_ print $ do
-        prod <- [testP1, testP2, bond1, bond2, simpleOption] <*> [t]
+        prod <- [testP1, testP2, bond1, bond2, opt1, opt2] <*> [t]
         mds  <- [mds1, mds2] <*> [t]
         f <- [evalObs, evalKnownFlows]
         return $ testEval prod mds f

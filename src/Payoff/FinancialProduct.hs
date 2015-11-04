@@ -5,15 +5,13 @@
 
 module Payoff.FinancialProduct where
 
-
 import Control.Applicative
 import Control.Monad
 import Data.Function
 import Data.List
 import Data.Monoid
-import EvalProd
+import Eval
 import Payoff.Flow
-import MarketData
 import Observable
 import Utils.Monad
 import Utils.Syntax
@@ -25,7 +23,7 @@ import Utils.Time
 data CompRule                       -- | Composition rule
     = AllOfRule                     -- ^ All products are considered
     | FirstOfRule [ObsPredicate]    -- ^ First first matching predicate
-    | BestOfRule Stock              -- ^ Best of a set of product (based on a reference stock)
+    | BestOfRule Stock FinDate      -- ^ Best of a set of product (based on a reference stock)
     deriving (Show, Read, Eq, Ord)
 
 data FinProduct
@@ -37,7 +35,7 @@ data FinProduct
 
 pattern AllOf ps        = Compose AllOfRule ps
 pattern FirstOf cs ps   = Compose (FirstOfRule cs) ps
-pattern BestOf s ps     = Compose (BestOfRule s) ps
+pattern BestOf s t ps   = Compose (BestOfRule s t) ps
 
 instance Monoid FinProduct where
     mempty = Empty
@@ -61,7 +59,7 @@ trn qty date instr = scale (cst qty) (Tangible date (Stock instr))
 
 scale :: ObsQuantity -> FinProduct -> FinProduct
 scale _ Empty           = Empty
-scale q (Scale q' p)    = Scale (q * q') p    -- TODO: optimize in case the observable is a constant
+scale q (Scale q' p)    = Scale (q * q') p                  -- TODO: optimize in case the observable is a constant
 scale q p               = Scale q p
 
 send, give :: FinProduct -> FinProduct
@@ -74,7 +72,10 @@ ifThen p a = eitherP p a Empty
 eitherP :: ObsPredicate -> FinProduct -> FinProduct -> FinProduct
 eitherP p a b = FirstOf [p, cst True] [a, b]
 
-bestOfBy :: Stock -> [FinProduct] -> FinProduct
+allOf :: [FinProduct] -> FinProduct
+allOf = mconcat
+
+bestOfBy :: Stock -> FinDate -> [FinProduct] -> FinProduct
 bestOfBy = BestOf
 
 instance IfThenElse ObsPredicate FinProduct where
@@ -95,9 +96,9 @@ instance IObservable FinProduct [Flow] where
     fixing t@Tangible{}     = pure t
     fixing (Scale qty p)    = Scale <$> fixing qty <*> fixing p
     fixing (AllOf ps)       = mconcat <$> mapM fixing ps
-    fixing (BestOf ref ps)  = do
+    fixing (BestOf s t ps)  = do
         products <- mapM fixing ps
-        fmap fst (findBestProduct ref products) <|> pure (BestOf ref products)
+        fmap fst (findBestProduct s t products) <|> pure (BestOf s t products)
     fixing (FirstOf cs ps)  = do
         conditions <- mapM fixing cs
         products <- mapM fixing ps
@@ -106,7 +107,7 @@ instance IObservable FinProduct [Flow] where
     evalObs Empty           = return []
     evalObs (Tangible d i)  = return [Flow 1 d i]
     evalObs (AllOf ps)      = concatMapM evalObs ps
-    evalObs (BestOf ref ps) = fmap snd (findBestProduct ref ps)
+    evalObs (BestOf s t ps) = fmap snd (findBestProduct s t ps)
     evalObs (FirstOf cs ps) = findFirstProduct cs ps >>= evalObs
     evalObs (Scale qty p)   = do
         val <- evalObs qty
@@ -118,7 +119,7 @@ instance IObservable FinProduct [Flow] where
 
 evalKnownFlows :: (Monad m) => FinProduct -> EvalProd m [Flow]
 evalKnownFlows (AllOf ps)      = concat <$> mapM evalKnownFlows ps
-evalKnownFlows (BestOf ref ps) = fmap snd (findBestProduct ref ps) <|> pure []
+evalKnownFlows (BestOf s t ps) = fmap snd (findBestProduct s t ps) <|> pure []
 evalKnownFlows (FirstOf cs ps) = (findFirstProduct cs ps >>= evalKnownFlows) <|> pure []
 evalKnownFlows p               = evalObs p <|> pure []
 
@@ -131,11 +132,11 @@ findFirstProduct cs ps = do
     firstMatch <- findM fst (zip conditions ps)
     return $ maybe Empty snd firstMatch
 
-findBestProduct :: (Monad m) => Stock -> [FinProduct] -> EvalProd m (FinProduct, [Flow])
-findBestProduct ref ps = do
+findBestProduct :: (Monad m) => Stock -> FinDate -> [FinProduct] -> EvalProd m (FinProduct, [Flow])
+findBestProduct ref t ps = do
     evals <- forM ps $ \p -> do
         flows <- evalObs p
-        converted <- mapM (convert ref) flows
+        converted <- mapM (compound t <=< convert ref) flows
         return ((p, flows), sum $ fmap flow converted)
     let best = maximumBy (compare `on` snd) evals
     return (fst best)

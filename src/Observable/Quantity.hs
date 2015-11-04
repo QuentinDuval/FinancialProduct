@@ -1,11 +1,14 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RecordWildCards #-}
---{-# LANGUAGE DeriveGeneric #-}
-module Observable.Quantity where
+module Observable.Quantity (
+    QtyTransf(..),
+    QtyOp(..),
+    ObsQuantity(..),
+    liftQtyOp
+) where
 
 import Control.Applicative
-import EvalProd
-import MarketData
+import Eval
 import Observable.Class
 import Observable.Dependency
 import Utils.Time
@@ -27,17 +30,8 @@ data ObsQuantity
     | CombineQty    { qtyOp  :: QtyOp, quantities  :: [ObsQuantity] }
     deriving (Show, Read, Eq, Ord)
 
-instance Num ObsQuantity where
-    (+)     = liftQtyOp Add
-    (*)     = liftQtyOp Mult
-    negate  = Transf Neg
-    abs     = Transf Abs
-    signum  = Transf Sign
-    fromInteger = cst . fromInteger
-
-instance Fractional ObsQuantity where
-    fromRational = cst . fromRational
-    recip = Transf Inv
+liftQtyOp :: QtyOp -> ObsQuantity -> ObsQuantity -> ObsQuantity
+liftQtyOp op a b = CombineQty op [a, b]
 
 
 -- | Implementations for observable
@@ -82,7 +76,4 @@ applyQtyTransf Inv   = recip
 applyQtyOp :: QtyOp -> Double -> Double -> Double
 applyQtyOp Add  = (+)
 applyQtyOp Mult = (*)
-
-liftQtyOp :: QtyOp -> ObsQuantity -> ObsQuantity -> ObsQuantity
-liftQtyOp op a b = CombineQty op [a, b]
 

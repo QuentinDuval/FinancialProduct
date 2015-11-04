@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 module Listed.SimpleOption (
     OptionInfo(..),
-    create
+    simpleOption
 ) where
 
 import Data.Monoid((<>))
@@ -21,14 +21,15 @@ data OptionInfo = OptionInfo {
     , quantity  :: ObsQuantity
     , buyInstr  :: String
     , sellInstr :: String
-    }
+} deriving (Show, Read, Eq, Ord)
 
-create :: OptionInfo -> FinDate -> FinProduct
-create OptionInfo{..} t1 = premium <> opt
+
+simpleOption :: OptionInfo -> FinDate -> FinProduct
+simpleOption OptionInfo{..} t1 = premium <> opt
     where
         t2  = t1 `addDay` maturity
-        val = stockRate buyInstr sellInstr
-        opt = ifThen (val t2 .>. cst strike) $
+        val = stock buyInstr t2 / stock sellInstr t2
+        opt = ifThen (val .>. cst strike) $
                 scale quantity $ mconcat [
                     send $ trn 1      t2 buyInstr,
                     give $ trn strike t2 sellInstr]

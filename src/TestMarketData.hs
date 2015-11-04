@@ -1,9 +1,9 @@
+{-# LANGUAGE MultiParamTypeClasses #-}
 module TestMarketData where
 
 import Control.Monad.Identity
 import qualified Data.Map as M
-import EvalProd
-import MarketData
+import Eval
 import Utils.Time
 
 
@@ -11,15 +11,16 @@ import Utils.Time
 
 type TimeValue  = FinDate -> Double
 
-data TestMarketData = TestMarketData
-    { stockMap :: M.Map Stock TimeValue
-    , rateMap  :: M.Map Rate  TimeValue }
+data TestMarketData = TestMarketData {
+    stockMap          :: M.Map Stock TimeValue ,
+    rateMap           :: M.Map Rate  TimeValue }
+
+instance MarketDataAccess Identity TestMarketData where
+    stockValue mds key t = pure $ findInMap (stockMap mds) key t
+    rateValue  mds key t = pure $ findInMap (rateMap  mds) key t
 
 testMdsAccess :: TestMarketData -> EvalEnv Identity
-testMdsAccess mds = newEnv f g
-    where
-        f key t = return $ findInMap (stockMap mds) key t
-        g key t = return $ findInMap (rateMap  mds) key t
+testMdsAccess = newEnv
 
 
 -- | Helpers to construct a market data set

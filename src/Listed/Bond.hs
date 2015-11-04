@@ -2,8 +2,8 @@
 module Listed.Bond (
     BondInfo(..),
     PeriodInfo(..),
-    buy,
-    sell,
+    buyBond,
+    sellBond,
 ) where
 
 import Data.Monoid((<>))
@@ -12,28 +12,26 @@ import Payoff
 import Utils.Time
 
 
-
 -- | Test financial product to build bond products
--- | Public:
 
 data BondInfo = BondInfo {
       nominal       :: Double
     , couponRate    :: FinDate -> ObsQuantity
     , currency      :: String
-    }
+}
 
 data PeriodInfo = PeriodInfo {
       startDate     :: FinDate
     , period        :: Shifter
     , periodCount   :: Integer
-    } deriving(Show, Eq, Ord)
+} deriving (Show, Read, Eq, Ord)
 
 
-buy :: BondInfo -> PeriodInfo -> FinProduct
-buy = create
+buyBond :: BondInfo -> PeriodInfo -> FinProduct
+buyBond = makeBond
 
-sell :: BondInfo -> PeriodInfo -> FinProduct
-sell bi pi = give (create bi pi)
+sellBond :: BondInfo -> PeriodInfo -> FinProduct
+sellBond bi pi = give (makeBond bi pi)
 
 
 -- | Private:
@@ -44,8 +42,8 @@ lastDate PeriodInfo{..} = addDay startDate (period * periodCount)
 midDates :: PeriodInfo -> [FinDate]
 midDates PeriodInfo{..} = addDay startDate . (period *) <$> [1..periodCount-1]
 
-create :: BondInfo -> PeriodInfo -> FinProduct
-create BondInfo{..} p =
+makeBond :: BondInfo -> PeriodInfo -> FinProduct
+makeBond BondInfo{..} p =
     let repayment = -1 * nominal
         initFlow = trn nominal (startDate p) currency
         lastFlow = trn repayment (lastDate p) currency

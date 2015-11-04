@@ -1,48 +1,26 @@
-module EvalProd (
+module Eval.Monad (
     EvalEnv,
     newEnv,
     EvalProd,
-    Result(..),
     resultWithEnv,
     getStock,
     getRate,
 ) where
 
-
 import Control.Applicative
 import Control.Arrow
 import qualified Data.Map as M
-import MarketData
+import Eval.MarketData
+import Eval.Result
 import Utils.Monad
 import Utils.Time
-
-
--- | Result of the evaluation of a market data value
-
-data Result a
-    = Done a
-    | Fail String
-    deriving (Show, Eq, Ord)
-
-instance Functor Result where
-    fmap f (Done a) = Done (f a)
-    fmap f (Fail s) = Fail s
-
-instance Applicative Result where
-    pure         = Done
-    Done f <*> a = fmap f a
-    Fail s <*> _ = Fail s
-
-instance Monad Result where
-    return       = pure
-    Done a >>= f = f a
-    Fail s >>= _ = Fail s
 
 
 -- | Abstract:
 -- | Environment of evaluation of financial product
 
-type Access m key res = key -> FinDate -> m (Result res)
+-- TODO - Add a new env with dependencies resolving at the beginning
+-- TODO - Add some way to accumulate requests in the functor + applicative (and access should take list?)
 
 data Cached m key res = Cached {
     access :: Access m key res,
@@ -54,12 +32,9 @@ data EvalEnv m = EvalEnv {
     rateAccess  :: Cached m Rate  Double
 }
 
-newEnv :: Access m Stock Double -> Access m Rate Double -> EvalEnv m
-newEnv s r = EvalEnv (toCached s) (toCached r)
+newEnv :: (MarketDataAccess m a) => a -> EvalEnv m
+newEnv s = EvalEnv (toCached $ stockValue s) (toCached $ rateValue s)
     where toCached a = Cached { access = a, cache = M.empty }
-
--- TODO - Add a new env with dependencies resolving at the beginning
--- TODO - Add some way to accumulate requests in the functor + applicative (and access should take list?)
 
 
 -- | Abstract:
@@ -125,5 +100,3 @@ retrieve cached key t =
             let newCache = M.insert (key, t) res (cache cached)
             let newCached = cached { cache = newCache }
             pure (res, newCached)
-
-

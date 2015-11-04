@@ -1,8 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 module Payoff.Flow where
 
-import EvalProd
-import MarketData
+import Eval
 import Numeric
 import Observable
 import Utils.Time
@@ -15,9 +14,6 @@ data Flow = Flow
     , date      :: FinDate
     , flowInstr :: Stock }
     deriving (Eq, Ord)
-
-
--- | Custom instances
 
 instance Show Flow where
     show Flow{ flow = f, date = d, flowInstr = (Stock s) } =
@@ -33,15 +29,24 @@ overFlow :: (Double -> Double) -> Flow -> Flow
 overFlow modifier f = f { flow = modifier (flow f) }
 
 
--- | Evaluation function
+-- | Convert a flow from one instrument to another
 
 convert :: (Monad m) => Stock -> Flow -> EvalProd m Flow
 convert newInstr f@Flow{..} = do
-    v1 <- evalObs $ StockObs (stockLabel flowInstr) date
-    v2 <- evalObs $ StockObs (stockLabel newInstr) date
-    return $ f { flow = v1 / v2 * flow, flowInstr = newInstr }
+    r <- evalStockRate (flowInstr, date) (newInstr, date)
+    pure $ f { flow = r * flow, flowInstr = newInstr }
 
-shiftDate :: (Monad m) => FinDate -> Flow -> EvalProd m Flow
-shiftDate = undefined -- TODO
 
+-- | Evaluate the value of a flow at a given date, taking into account the financing rate
+
+compound :: (Monad m) => FinDate -> Flow -> EvalProd m Flow
+compound newDate f@Flow{..} = do
+    r <- evalStockRate (flowInstr, date) (flowInstr, newDate)
+    pure $ f { flow = r * flow, date = newDate }
+
+
+-- | Private
+
+evalStockRate :: (Monad m) => (Stock, FinDate) -> (Stock, FinDate) -> EvalProd m Double
+evalStockRate (s1, t1) (s2, t2) = evalObs (StockObs (stockLabel s1) t1 / StockObs (stockLabel s2) t2)
 

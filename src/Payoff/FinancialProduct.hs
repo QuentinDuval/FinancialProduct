@@ -1,7 +1,7 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE DataKinds #-}
 
 module Payoff.FinancialProduct where
 
@@ -21,14 +21,17 @@ import Utils.Time
 
 -- | Vocabulary to describe financial products
 
+data BestOfParams = BestOfParams { bestCount :: Int, refStock :: Stock, refDate :: FinDate }
+    deriving (Show, Read, Eq, Ord)
+
 data FinProduct
     = Empty
-    | Tangible  { tangible    :: Stock,      payDate :: FinDate }
-    | Scale     { subProduct  :: FinProduct, scaling :: ObsQuantity }
-    | AllOf     { subProducts :: [FinProduct] }
-    | FirstOf   { subProducts :: [FinProduct], predicates :: [ObsPredicate] }
-    | BestOf    { subProducts :: [FinProduct], bestCount :: Int,
-                  refStock :: Stock, refDate :: FinDate }           -- TODO add proxy product for "best" (but should not eval twice)
+    | Tangible      { tangible    :: Stock,      payDate :: FinDate }               -- TODO add a flow type?
+    | Scale         { subProduct  :: FinProduct, scaling :: ObsQuantity }
+    | AllOf         { subProducts :: [FinProduct] }
+    | FirstOf       { subProducts :: [FinProduct], predicates   :: [ObsPredicate] }
+    | BestOf        { subProducts :: [FinProduct], bestOfParams :: BestOfParams }
+    | BestOfProxy   { subProducts :: [FinProduct], proxyProducts :: [FinProduct], bestOfParams :: BestOfParams }
     deriving (Show, Read, Eq, Ord)
 
 instance Monoid FinProduct where
@@ -74,11 +77,25 @@ allOf = combine . foldr addProd []
         combine [x]            = x
         combine xs             = AllOf xs
 
-bestOfBy :: Stock -> FinDate -> [FinProduct] -> FinProduct
-bestOfBy s t ps = BestOf ps 1 s t
+bestsOf :: Int -> [FinProduct] -> Stock -> FinDate -> FinProduct
+bestsOf n ps s t = BestOf ps (BestOfParams n s t)
+
+bestsOfWith :: Int -> [(FinProduct, FinProduct)] -> Stock -> FinDate -> FinProduct
+bestsOfWith n ps s t =
+    let (proxies, products) = unzip ps
+    in BestOfProxy products proxies (BestOfParams 1 s t)
+
+withEvalOn :: (Stock -> FinDate -> b) -> (Stock, FinDate) -> b
+withEvalOn = uncurry
 
 instance IfThenElse ObsPredicate FinProduct where
     ifThenElse = eitherP
+
+
+-- | Aliases
+
+bestOf     = bestsOf 1
+bestOfWith = bestsOfWith 1
 
 
 -- | Evaluation of the production of financial products
@@ -89,6 +106,7 @@ instance IObservable FinProduct [Flow] where
     getDeps Tangible{}      = mempty
     getDeps Scale{..}       = getDeps subProduct <> getDeps scaling
     getDeps FirstOf{..}     = getAllDeps predicates <> getAllDeps subProducts
+    getDeps BestOfProxy{..} = getAllDeps proxyProducts <> getAllDeps subProducts
     getDeps composite       = getAllDeps (subProducts composite)
 
     fixing Empty            = pure Empty
@@ -98,22 +116,28 @@ instance IObservable FinProduct [Flow] where
     fixing b@BestOf{..}     = do
         products <- mapM fixing subProducts
         let fixed = b { subProducts = products }
-        fmap fst (findBestProducts fixed) <|> pure fixed
+        fmap fst (findBest bestOfParams products) <|> pure fixed
+    fixing b@BestOfProxy{..}= do
+        products <- mapM fixing subProducts
+        proxies <- mapM fixing proxyProducts
+        let fixed = b { subProducts = products, proxyProducts = proxies }
+        fmap fst (findBestWith bestOfParams products proxies) <|> pure fixed
     fixing f@FirstOf{..}    = do
         conditions <- mapM fixing predicates
         products <- mapM fixing subProducts
         let fixed = FirstOf products conditions
         findFirstProduct conditions products <|> pure fixed
 
-    evalObs Empty           = return []
-    evalObs Tangible{..}    = return [Flow 1 payDate tangible]
+    evalObs Empty           = pure []
+    evalObs Tangible{..}    = pure [Flow 1 payDate tangible]
     evalObs AllOf{..}       = concatMapM evalObs subProducts
-    evalObs b@BestOf{}      = fmap snd (findBestProducts b)
+    evalObs BestOf{..}      = fmap snd (findBest bestOfParams subProducts)
     evalObs FirstOf{..}     = findFirstProduct predicates subProducts >>= evalObs
+    evalObs BestOfProxy{..} = fmap snd (findBestWith bestOfParams subProducts proxyProducts)
     evalObs Scale{..}       = do
         val <- evalObs scaling
         flows <- evalObs subProduct
-        return $ overFlow (*val) <$> flows
+        pure $ overFlow (*val) <$> flows
 
 
 -- | Utils
@@ -130,14 +154,24 @@ findFirstProduct :: (Monad m) => [ObsPredicate] -> [FinProduct] -> EvalProd m Fi
 findFirstProduct cs ps = do
     let conditions = fmap evalObs cs
     firstMatch <- findM fst (zip conditions ps)
-    return $ maybe Empty snd firstMatch
+    pure $ maybe Empty snd firstMatch
 
-findBestProducts :: (Monad m) => FinProduct -> EvalProd m (FinProduct, [Flow])
-findBestProducts BestOf{..} = do
+findBest :: (Monad m) => BestOfParams -> [FinProduct] -> EvalProd m (FinProduct, [Flow])
+findBest params products = first allOf <$> findBests evalObs params products
+
+findBestWith :: (Monad m) => BestOfParams -> [FinProduct] -> [FinProduct] -> EvalProd m (FinProduct, [Flow])
+findBestWith params products proxies =
+    let bests = findBests (evalObs . fst) params (zip proxies products)
+    in first (allOf . fmap snd) <$> bests
+
+findBests :: (Monad m) => (p -> EvalProd m [Flow]) -> BestOfParams -> [p] -> EvalProd m ([p], [Flow])
+findBests evalP BestOfParams{..} subProducts = do
     evals <- forM subProducts $ \p -> do
-        flows <- evalObs p
+        flows <- evalP p
         converted <- mapM (compound refDate <=< convert refStock) flows
-        return ((p, flows), sum $ fmap flow converted)
+        pure ((p, flows), sum $ fmap flow converted)
     let bests = fst <$> sortBy (compare `on` snd) evals
-    pure $ (allOf *** concat) (unzip bests)
+    pure $ second concat (unzip bests)
+
+
 

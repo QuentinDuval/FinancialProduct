@@ -27,7 +27,9 @@ testP1 :: FinDate -> FinProduct
 testP1 t =
     scale (cst 1.0 + stockRate "USD" "EUR" t) $
         allOf [
-            bestOfBy    (Stock "USD") t                     [trn 120 t "EUR" , trn 120 t "USD"],
+            bestOf      [trn 120 t "EUR" , trn 120 t "USD"]     `withEvalOn` (Stock "USD", t),
+            bestOfWith  [(trn 120 t "EUR", trn 120 t "USD"),
+                         (trn 120 t "USD", trn 120 t "EUR")]    `withEvalOn` (Stock "USD", t),
             scale       (rate "EURIBOR3M" t + cst 0.33)     (trn 120 t "EUR"),
             scale       (stock "GOLD" t * rate "LIBOR" t)   (trn 0.9 t "USD"),
             if stock "GOLD" t .<. cst 10.0       then trn 12 t "SILV" else trn 10 t "GOLD",
@@ -97,7 +99,6 @@ mds2 t = initMds    [(Stock "GOLD"     , const 1.58)
 -- TODO: Apply the discout factors of flows when evaluating "BestOf" => You need the "trend" (financing rate / dividend) + "volatility" in the market
 -- TODO: Persist the products with (Show / Read) => plug that in the main
 -- TODO: Persist with JSON: https://www.fpcomplete.com/school/starting-with-haskell/libraries-and-frameworks/text-manipulation/json
--- TODO: Model "Asian Option" => based on the average value of the deal
 -- TODO: Model "Best of option" => 3 options at first, one year after, keep the 2 bests, then 1 year after, keep the best, then option
 -- TODO: Add "compression" function (scale could be grouped, etc.)
 -- TODO: Bring parallelism in the monad as well
@@ -109,8 +110,6 @@ main :: IO ()
 main = do
     t <- utctDay <$> getCurrentTime
     print (testP1 t)
-
-    let i = if True then 1 else 0
 
     putStrLn "\nTest of evaluation of products:"
     let testEval prod mds f = runIdentity $ resultWithEnv (testMdsAccess mds) (f prod)

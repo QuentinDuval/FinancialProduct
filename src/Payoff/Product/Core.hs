@@ -91,6 +91,14 @@ instance IObservable FinProduct [Flow] where
         pure $ overFlow (*val) <$> flows
 
 
+-- | Eval know flows only
+
+evalKnownFlows :: (Monad m) => FinProduct -> EvalProd m [Flow]
+evalKnownFlows AllOf{..}       = concatMapM evalKnownFlows subProducts
+evalKnownFlows FirstOf{..}     = (findFirstProduct predicates subProducts >>= evalKnownFlows) <|> pure []
+evalKnownFlows p               = evalObs p <|> pure []
+
+
 -- | Private
 
 findFirstProduct :: (Monad m) => [ObsPredicate] -> [FinProduct] -> EvalProd m FinProduct

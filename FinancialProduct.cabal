@@ -38,7 +38,6 @@ executable FinancialProduct
         Payoff.Product.Combinator
         Payoff.Product.Core
         Payoff.Product.FirstOf
-        Payoff.Product.Utils
         TestMarketData
         Utils.Foldable
         Utils.Monad

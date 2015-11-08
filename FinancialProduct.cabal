@@ -22,11 +22,11 @@ executable FinancialProduct
         Eval.MarketData
         Eval.Monad
         Eval.Result
-        Listed.AsianOption
         Listed.BestOfOption
         Listed.Bond
+        Listed.Option.Asian
         Listed.Option.Core
-        Listed.SimpleOption
+        Listed.Option.European
         Observable
         Observable.Class
         Observable.Dependency

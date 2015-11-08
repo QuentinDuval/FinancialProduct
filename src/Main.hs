@@ -4,9 +4,9 @@ module Main (
 ) where
 
 
-import Listed.Bond as Bond
-import Listed.AsianOption as AOpt
-import Listed.SimpleOption as Opt
+import Listed.Bond
+import Listed.Option.Asian
+import Listed.Option.European
 
 import Control.Monad.Identity
 import Data.Monoid
@@ -49,7 +49,7 @@ bond1   = bond $ (+) <$> rate "EURIBOR3M" <*> rate "LIBOR"
 bond2 t = bond (const $ cst 0.05 * stockRate "EUR" "USD" t) t
 
 opt1 :: FinDate -> FinProduct
-opt1 t = simpleOption optInfo t
+opt1 t = europeanOption optInfo t
     where
         optInfo = SimpleOption
             OptionHeader {  maturity = 5,       premium   = trn 5 t "USD" }

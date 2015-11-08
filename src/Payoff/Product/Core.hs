@@ -20,9 +20,9 @@ import Utils.Time
 
 -- | Vocabulary to describe financial products
 
-data FinProduct
+data FinProduct                                                                     -- TODO: Rename to "flow generator"?
     = Empty
-    | Tangible      { tangible    :: Stock,      payDate :: FinDate }               -- TODO add a flow type?
+    | Tangible      { tangible    :: Stock,      payDate :: FinDate }               -- TODO: Add a flow type?
     | Scale         { subProduct  :: FinProduct, scaling :: ObsQuantity }
     | AllOf         { subProducts :: [FinProduct] }
     | FirstOf       { subProducts :: [FinProduct], predicates   :: [ObsPredicate] }

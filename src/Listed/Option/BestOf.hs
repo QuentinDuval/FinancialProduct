@@ -14,6 +14,12 @@ import Utils.Time
 
 
 bestOfOption :: CompositeOption -> FinDate -> FinProduct
-bestOfOption (CompositeOption OptionHeader{..} bodies) t1
-    = premium <> bestOf (fmap (simpleOptionBody t1) bodies) `withEvalOn` (Stock "USD", t1)
+bestOfOption (CompositeOption _ []) _ = Empty
+bestOfOption (CompositeOption OptionHeader{..} bodies) t1 =
+    let t2 = t1 `addDay` div maturity 2
+        t3 = t1 `addDay` maturity
+        options t = fmap (simpleOptionBody t) bodies
+        evalRef = buyInstr (head bodies)
+    in premium <>
+        bestOfWith (zip (options t2) (options t3)) `withEvalOn` (Stock evalRef, t1)
 

@@ -13,6 +13,8 @@ import Utils.Monad
 import Utils.Time
 
 
+-- TODO: In reality, there are several stages of selections. How to model this?
+
 bestOfOption :: CompositeOption -> FinDate -> FinProduct
 bestOfOption (CompositeOption _ []) _ = Empty
 bestOfOption (CompositeOption OptionHeader{..} bodies) t1 =

@@ -1,8 +1,7 @@
 module Payoff (
-    module Payoff.FinancialProduct,
     module Payoff.Flow,
+    module Payoff.Product,
 ) where
 
-
-import Payoff.FinancialProduct
 import Payoff.Flow
+import Payoff.Product

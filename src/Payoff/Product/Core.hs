@@ -3,15 +3,16 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Payoff.FinancialProduct where
+module Payoff.Product.Core where
 
 import Control.Applicative
 import Control.Arrow
 import Control.Monad
-import Data.Function
-import Data.List
+import Data.Maybe
 import Data.Monoid
 import Eval
+import Payoff.Product.BestOf
+import Payoff.Product.FirstOf
 import Payoff.Flow
 import Observable
 import Utils.Monad
@@ -20,9 +21,6 @@ import Utils.Time
 
 
 -- | Vocabulary to describe financial products
-
-data BestOfParams = BestOfParams { bestCount :: Int, refStock :: Stock, refDate :: FinDate }
-    deriving (Show, Read, Eq, Ord)
 
 data FinProduct
     = Empty
@@ -34,13 +32,8 @@ data FinProduct
     | BestOfProxy   { subProducts :: [FinProduct], proxyProducts :: [FinProduct], bestOfParams :: BestOfParams }
     deriving (Show, Read, Eq, Ord)
 
-instance Monoid FinProduct where
-    mempty = Empty
-    mappend a b = allOf [a, b]
-    mconcat = allOf
 
-
--- | Combinators
+-- | Combinators to build financial products
 
 stock, rate :: String -> FinDate -> ObsQuantity
 stock = StockObs
@@ -91,6 +84,11 @@ withEvalOn = uncurry
 instance IfThenElse ObsPredicate FinProduct where
     ifThenElse = eitherP
 
+instance Monoid FinProduct where
+    mempty = Empty
+    mappend a b = allOf [a, b]
+    mconcat = allOf
+
 
 -- | Aliases
 
@@ -140,21 +138,10 @@ instance IObservable FinProduct [Flow] where
         pure $ overFlow (*val) <$> flows
 
 
--- | Utils
-
-evalKnownFlows :: (Monad m) => FinProduct -> EvalProd m [Flow]
-evalKnownFlows AllOf{..}       = concatMapM evalKnownFlows subProducts
-evalKnownFlows FirstOf{..}     = (findFirstProduct predicates subProducts >>= evalKnownFlows) <|> pure []
-evalKnownFlows p               = evalObs p <|> pure []
-
-
 -- | Private
 
 findFirstProduct :: (Monad m) => [ObsPredicate] -> [FinProduct] -> EvalProd m FinProduct
-findFirstProduct cs ps = do
-    let conditions = fmap evalObs cs
-    firstMatch <- findM fst (zip conditions ps)
-    pure $ maybe Empty snd firstMatch
+findFirstProduct cs ps = fromMaybe Empty <$> findFirst cs ps
 
 findBest :: (Monad m) => BestOfParams -> [FinProduct] -> EvalProd m (FinProduct, [Flow])
 findBest params products = first allOf <$> findBests evalObs params products
@@ -163,15 +150,5 @@ findBestWith :: (Monad m) => BestOfParams -> [FinProduct] -> [FinProduct] -> Eva
 findBestWith params products proxies =
     let bests = findBests (evalObs . fst) params (zip proxies products)
     in first (allOf . fmap snd) <$> bests
-
-findBests :: (Monad m) => (p -> EvalProd m [Flow]) -> BestOfParams -> [p] -> EvalProd m ([p], [Flow])
-findBests evalP BestOfParams{..} subProducts = do
-    evals <- forM subProducts $ \p -> do
-        flows <- evalP p
-        converted <- mapM (compound refDate <=< convert refStock) flows
-        pure ((p, flows), sum $ fmap flow converted)
-    let bests = fst <$> sortBy (compare `on` snd) evals
-    pure $ second concat (unzip bests)
-
 
 

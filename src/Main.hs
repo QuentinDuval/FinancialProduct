@@ -13,7 +13,7 @@ import Data.Monoid
 import Eval
 import Prelude hiding (ifThenElse)
 import Observable
-import Payoff.FinancialProduct
+import Payoff.Product
 import TestMarketData
 import Utils.Foldable
 import Utils.Monad

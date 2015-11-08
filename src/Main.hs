@@ -49,21 +49,17 @@ bond1, bond2 :: FinDate -> FinProduct
 bond1   = bond $ (+) <$> rate "EURIBOR3M" <*> rate "LIBOR"
 bond2 t = bond (const $ cst 0.05 * stockRate "EUR" "USD" t) t
 
-opt1 :: FinDate -> FinProduct
-opt1 t = europeanOption optInfo t
+optionProducts :: FinDate -> [FinProduct]
+optionProducts t = [
+        europeanOption  optInfo,
+        asianOption     optInfo 1,
+        bestOfOption    compositeOpt] <*> [t]
     where
-        optInfo = SimpleOption
-            OptionHeader {  maturity = 5,       premium   = trn 5 t "USD" }
-            OptionBody   {  strike   = 10,      quantity  = cst 27,
-                            buyInstr = "GOLD",  sellInstr = "USD" }
-
-opt2 :: FinDate -> FinProduct
-opt2 t = asianOption optInfo 1 t
-    where
-        optInfo = SimpleOption
-            OptionHeader {  maturity = 5,       premium   = trn 5 t "USD" }
-            OptionBody   {  strike   = 10,      quantity  = cst 40,
-                            buyInstr = "GOLD",  sellInstr = "USD" }
+        optHeader = OptionHeader { maturity = 5, premium = trn 5 t "USD" }
+        optBody1 = OptionBody { strike = 10, quantity  = cst 27, buyInstr = "GOLD", sellInstr = "USD" }
+        optBody2 = OptionBody { strike = 10, quantity  = cst 27, buyInstr = "GOLD", sellInstr = "EUR" }
+        optInfo = SimpleOption optHeader optBody1
+        compositeOpt = CompositeOption optHeader [optBody1, optBody2]
 
 
 -- | Two test market data sets
@@ -106,7 +102,7 @@ main = do
     putStrLn "\nTest of evaluation of products:"
     let testEval prod mds f = runIdentity $ resultWithEnv (testMdsAccess mds) (f prod)
     mapM_ print $ do
-        prod <- [testP1, testP2, bond1, bond2, opt1, opt2] <*> [t]
+        prod <- ([testP1, testP2, bond1, bond2] <*> [t]) ++ optionProducts t
         mds  <- [mds1, mds2] <*> [t]
         f <- [evalObs, evalKnownFlows]
         return $ testEval prod mds f

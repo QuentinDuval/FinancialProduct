@@ -21,7 +21,7 @@ bestOfOption (CompositeOption OptionHeader{..} bodies) t1 =
     let t2 = t1 `addDay` div maturity 2
         t3 = t1 `addDay` maturity
         options t = fmap (simpleOptionBody t) bodies
-        evalRef = buyInstr (head bodies)
+        evalRef = sellInstr (head bodies)
     in premium <>
         bestOfWith (zip (options t2) (options t3)) `withEvalOn` (Stock evalRef, t1)
 

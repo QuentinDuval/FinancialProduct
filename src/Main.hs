@@ -6,6 +6,7 @@ module Main (
 
 import Listed.Bond
 import Listed.Option.Asian
+import Listed.Option.BestOf
 import Listed.Option.European
 
 import Control.Monad.Identity

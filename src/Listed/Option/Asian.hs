@@ -14,8 +14,6 @@ import Utils.Time
 
 
 
--- |
-
 asianOption :: SimpleOption -> Shifter -> FinDate -> FinProduct
 asianOption (SimpleOption OptionHeader{..} OptionBody{..}) evalGap t1
     = premium <> opt

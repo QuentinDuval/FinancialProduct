@@ -51,24 +51,18 @@ bond2 t = bond (const $ cst 0.05 * stockRate "EUR" "USD" t) t
 opt1 :: FinDate -> FinProduct
 opt1 t = simpleOption optInfo t
     where
-        optInfo = OptionInfo {
-            premium   = trn 5 t "USD",
-            maturity  = 5,
-            strike    = 10,
-            quantity  = cst 27,
-            buyInstr  = "GOLD",
-            sellInstr = "USD" }
+        optInfo = SimpleOption
+            OptionHeader {  maturity = 5,       premium   = trn 5 t "USD" }
+            OptionBody   {  strike   = 10,      quantity  = cst 27,
+                            buyInstr = "GOLD",  sellInstr = "USD" }
 
 opt2 :: FinDate -> FinProduct
-opt2 t = asianOption (AsianOptionInfo optInfo 1) t
+opt2 t = asianOption optInfo 1 t
     where
-        optInfo = OptionInfo {
-            premium   = trn 5 t "USD",
-            maturity  = 5,
-            strike    = 10,
-            quantity  = cst 40,
-            buyInstr  = "GOLD",
-            sellInstr = "USD" }
+        optInfo = SimpleOption
+            OptionHeader {  maturity = 5,       premium   = trn 5 t "USD" }
+            OptionBody   {  strike   = 10,      quantity  = cst 40,
+                            buyInstr = "GOLD",  sellInstr = "USD" }
 
 
 -- | Two test market data sets

@@ -23,7 +23,9 @@ executable FinancialProduct
         Eval.Monad
         Eval.Result
         Listed.AsianOption
+        Listed.BestOfOption
         Listed.Bond
+        Listed.Option.Core
         Listed.SimpleOption
         Observable
         Observable.Class

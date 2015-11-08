@@ -1,11 +1,11 @@
 {-# LANGUAGE RecordWildCards #-}
 module Listed.AsianOption(
-    AsianOptionInfo(..),
+    module Listed.Option.Core,
     asianOption,
 ) where
 
 import Data.Monoid((<>))
-import Listed.SimpleOption
+import Listed.Option.Core
 import Eval.MarketData
 import Observable
 import Payoff
@@ -14,16 +14,10 @@ import Utils.Time
 
 
 
--- | Test financial product to simple option products
+-- |
 
-data AsianOptionInfo = AsianOptionInfo {
-      optInfo   :: OptionInfo
-    , evalGap   :: Shifter
-} deriving (Show, Read, Eq, Ord)
-
-
-asianOption :: AsianOptionInfo -> FinDate -> FinProduct
-asianOption AsianOptionInfo { optInfo = OptionInfo{..}, .. } t1
+asianOption :: SimpleOption -> Shifter -> FinDate -> FinProduct
+asianOption (SimpleOption OptionHeader{..} OptionBody{..}) evalGap t1
     = premium <> opt
     where
         t2  = t1 `addDay` maturity

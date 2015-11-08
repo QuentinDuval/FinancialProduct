@@ -14,6 +14,8 @@ import Utils.Time
 
 
 -- TODO: In reality, there are several stages of selections. How to model this?
+-- TODO: BestOf should take a constructor to package the products selected.
+--       BestOf to AllOf is the base, but not limited to that.
 
 bestOfOption :: CompositeOption -> FinDate -> FinProduct
 bestOfOption (CompositeOption _ []) _ = Empty

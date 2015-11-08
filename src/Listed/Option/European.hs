@@ -14,12 +14,6 @@ import Utils.Time
 
 
 europeanOption :: SimpleOption -> FinDate -> FinProduct
-europeanOption (SimpleOption OptionHeader{..} OptionBody{..}) t1 = premium <> opt
-    where
-        t2  = t1 `addDay` maturity
-        val = stock buyInstr t2 / stock sellInstr t2
-        opt = ifThen (val .>. cst strike) $
-                scale quantity $ mconcat [
-                    send $ trn 1      t2 buyInstr,
-                    give $ trn strike t2 sellInstr]
+europeanOption o@(SimpleOption OptionHeader{..} optBody) t1
+    = premium <> simpleOptionBody (t1 `addDay` maturity) optBody
 

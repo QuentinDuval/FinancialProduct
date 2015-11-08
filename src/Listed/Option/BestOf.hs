@@ -1,11 +1,11 @@
 {-# LANGUAGE RecordWildCards #-}
 module Listed.Option.BestOf (
-    module Listed.Option.Core,
+    module Listed.Option.European,
     bestOfOption,
 ) where
 
 import Data.Monoid((<>))
-import Listed.Option.Core
+import Listed.Option.European
 import Observable
 import Payoff
 import Utils.Monad
@@ -14,7 +14,7 @@ import Utils.Time
 
 bestOfOption :: CompositeOption -> FinDate -> FinProduct
 bestOfOption (CompositeOption OptionHeader{..} bodies) t1
-    = undefined
+    = premium <> allOf (fmap (simpleOptionBody t1) bodies)
 --    = premium <> opt
 --    where
 --        t2  = t1 `addDay` maturity

@@ -1,3 +1,4 @@
+{-# LANGUAGE RecordWildCards #-}
 module Listed.Option.Core where
 
 import Observable
@@ -29,4 +30,15 @@ data SimpleOption
 data CompositeOption
     = CompositeOption OptionHeader [OptionBody]
     deriving (Show, Read, Eq, Ord)
+
+
+-- | Common product construction
+
+simpleOptionBody :: FinDate -> OptionBody -> FinProduct
+simpleOptionBody t OptionBody{..} =
+    let val = stock buyInstr t / stock sellInstr t
+    in ifThen (val .>. cst strike) $
+        scale quantity $ mconcat [
+            send $ trn 1      t buyInstr,
+            give $ trn strike t sellInstr]
 

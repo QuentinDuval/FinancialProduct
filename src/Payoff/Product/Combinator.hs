@@ -33,12 +33,12 @@ eitherP :: ObsPredicate -> FinProduct -> FinProduct -> FinProduct
 eitherP p a b = FirstOf [a, b] [p, cst True]
 
 bestsOf :: Int -> [FinProduct] -> Stock -> FinDate -> FinProduct
-bestsOf n ps s t = BestOf ps (BestOfParams n s t)
+bestsOf count products s t = BestOf products [BestOfParam count s t 0]
 
-bestsOfWith :: Int -> [(FinProduct, FinProduct)] -> Stock -> FinDate -> FinProduct
-bestsOfWith n ps s t =
-    let (proxies, products) = unzip ps
-    in BestOfProxy products proxies (BestOfParams 1 s t)
+cascadingBestsOf :: [(Int, Shifter)] -> [FinProduct] -> Stock -> FinDate -> FinProduct
+cascadingBestsOf shiftedEvals products s t =
+    let toParam (count, shift) = BestOfParam count s t shift
+    in BestOf products (fmap toParam shiftedEvals)
 
 withEvalOn :: (Stock -> FinDate -> b) -> (Stock, FinDate) -> b
 withEvalOn = uncurry
@@ -46,8 +46,7 @@ withEvalOn = uncurry
 
 -- | Aliases
 
-bestOf     = bestsOf 1
-bestOfWith = bestsOfWith 1
+bestOf = bestsOf 1
 
 
 -- | Helper instances

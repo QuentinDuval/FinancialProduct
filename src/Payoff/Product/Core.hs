@@ -27,7 +27,6 @@ data FinProduct                                                                 
     | AllOf         { subProducts :: [FinProduct] }
     | FirstOf       { subProducts :: [FinProduct], predicates   :: [ObsPredicate] }
     | BestOf        { subProducts :: [FinProduct], bestOfParams :: BestOfParams }
-    | BestOfProxy   { subProducts :: [FinProduct], proxyProducts :: [FinProduct], bestOfParams :: BestOfParams }
     deriving (Show, Read, Eq, Ord)
 
 
@@ -57,7 +56,7 @@ instance IObservable FinProduct [Flow] where
     getDeps Tangible{}      = mempty
     getDeps Scale{..}       = getDeps subProduct <> getDeps scaling
     getDeps FirstOf{..}     = getAllDeps predicates <> getAllDeps subProducts
-    getDeps BestOfProxy{..} = getAllDeps proxyProducts <> getAllDeps subProducts
+    getDeps BestOf{..}      = getAllDeps subProducts <> getBestOfDeps bestOfParams subProducts
     getDeps composite       = getAllDeps (subProducts composite)
 
     fixing Empty            = pure Empty
@@ -67,12 +66,7 @@ instance IObservable FinProduct [Flow] where
     fixing b@BestOf{..}     = do
         products <- mapM fixing subProducts
         let fixed = b { subProducts = products }
-        fmap fst (findBest bestOfParams products) <|> pure fixed
-    fixing b@BestOfProxy{..}= do
-        products <- mapM fixing subProducts
-        proxies <- mapM fixing proxyProducts
-        let fixed = b { subProducts = products, proxyProducts = proxies }
-        fmap fst (findBestWith bestOfParams products proxies) <|> pure fixed
+        fmap fst (findBest bestOfParams products) <|> pure fixed -- TODO - Use bestOfFixing
     fixing f@FirstOf{..}    = do
         conditions <- mapM fixing predicates
         products <- mapM fixing subProducts
@@ -84,11 +78,20 @@ instance IObservable FinProduct [Flow] where
     evalObs AllOf{..}       = concatMapM evalObs subProducts
     evalObs BestOf{..}      = fmap snd (findBest bestOfParams subProducts)
     evalObs FirstOf{..}     = findFirstProduct predicates subProducts >>= evalObs
-    evalObs BestOfProxy{..} = fmap snd (findBestWith bestOfParams subProducts proxyProducts)
     evalObs Scale{..}       = do
         val <- evalObs scaling
         flows <- evalObs subProduct
         pure $ overFlow (*val) <$> flows
+
+    shiftObs Empty          _       = Empty
+    shiftObs p@Tangible{..} shifter = p { payDate = payDate `addDay` shifter }
+    shiftObs Scale{..}      shifter = Scale { subProduct = shiftObs subProduct shifter
+                                            , scaling = shiftObs scaling shifter }
+    shiftObs AllOf{..}      shifter = AllOf $ fmap (`shiftObs` shifter) subProducts
+    shiftObs BestOf{..}     shifter = BestOf { subProducts = fmap (`shiftObs` shifter) subProducts
+                                             , bestOfParams = shiftRefDate bestOfParams shifter }
+    shiftObs FirstOf{..}    shifter = FirstOf { subProducts = fmap (`shiftObs` shifter) subProducts
+                                              , predicates = fmap (`shiftObs` shifter) predicates }
 
 
 -- | Eval know flows only
@@ -105,11 +108,7 @@ findFirstProduct :: (Monad m) => [ObsPredicate] -> [FinProduct] -> EvalProd m Fi
 findFirstProduct cs ps = fromMaybe Empty <$> findFirst cs ps
 
 findBest :: (Monad m) => BestOfParams -> [FinProduct] -> EvalProd m (FinProduct, [Flow])
-findBest params products = first allOf <$> findBests evalObs params products
+findBest params products = first allOf <$> findBests {-evalObs-} params products
 
-findBestWith :: (Monad m) => BestOfParams -> [FinProduct] -> [FinProduct] -> EvalProd m (FinProduct, [Flow])
-findBestWith params products proxies =
-    let bests = findBests (evalObs . fst) params (zip proxies products)
-    in first (allOf . fmap snd) <$> bests
 
 

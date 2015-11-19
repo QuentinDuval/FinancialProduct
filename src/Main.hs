@@ -29,8 +29,8 @@ testP1 t =
     scale (cst 1.0 + stockRate "USD" "EUR" t) $
         allOf [
             bestOf      [trn 120 t "EUR" , trn 120 t "USD"]     `withEvalOn` (Stock "USD", t),
-            bestOfWith  [(trn 120 t "EUR", trn 120 t "USD"),
-                         (trn 120 t "USD", trn 120 t "EUR")]    `withEvalOn` (Stock "USD", t),
+--            bestOfWith  [(trn 120 t "EUR", trn 120 t "USD"),
+--                         (trn 120 t "USD", trn 120 t "EUR")]    `withEvalOn` (Stock "USD", t),
             scale       (rate "EURIBOR3M" t + cst 0.33)     (trn 120 t "EUR"),
             scale       (stock "GOLD" t * rate "LIBOR" t)   (trn 0.9 t "USD"),
             if stock "GOLD" t .<. cst 10.0       then trn 12 t "SILV" else trn 10 t "GOLD",

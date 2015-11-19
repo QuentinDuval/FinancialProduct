@@ -64,6 +64,12 @@ instance IObservable ObsQuantity Double where
     evalObs Transf{..}      = applyQtyTransf transf <$> evalObs subQty
     evalObs CombineQty{..}  = foldl1 (applyQtyOp qtyOp) <$> mapM evalObs quantities
 
+    shiftObs q@CstQuantity{} _         = q
+    shiftObs q@StockObs{..}    shifter = q { obsTime    = obsTime `addDay` shifter }
+    shiftObs q@RateObs{..}     shifter = q { obsTime    = obsTime `addDay` shifter }
+    shiftObs q@Transf{..}      shifter = q { subQty     = subQty `shiftObs` shifter }
+    shiftObs q@CombineQty{..}  shifter = q { quantities = fmap (`shiftObs` shifter) quantities }
+
 
 -- | Private
 

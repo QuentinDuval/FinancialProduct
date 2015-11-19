@@ -6,14 +6,16 @@ module Observable.Class where
 import Data.Maybe
 import Eval
 import Observable.Dependency
+import Utils.Time
 
 
 -- | Class for the observables and the operations on them
 
 class IObservable a b | a -> b where
-    getDeps ::            a -> ObsDependencies
-    fixing  :: Monad m => a -> EvalProd m a
-    evalObs :: Monad m => a -> EvalProd m b
+    getDeps  ::            a -> ObsDependencies
+    fixing   :: Monad m => a -> EvalProd m a
+    evalObs  :: Monad m => a -> EvalProd m b
+    shiftObs ::            a -> Shifter -> a
 
 class IWrappable a b | a -> b where
     cst     :: b -> a

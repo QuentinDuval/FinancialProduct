@@ -33,10 +33,10 @@ eitherP :: ObsPredicate -> FinProduct -> FinProduct -> FinProduct
 eitherP p a b = FirstOf [a, b] [p, cst True]
 
 bestsOf :: Int -> [FinProduct] -> Stock -> FinDate -> FinProduct
-bestsOf count products s t = BestOf products [BestOfParam count s t 0]
+bestsOf count products = cascadingBestsOf products [(1, 0)]
 
-cascadingBestsOf :: [(Int, Shifter)] -> [FinProduct] -> Stock -> FinDate -> FinProduct
-cascadingBestsOf shiftedEvals products s t =
+cascadingBestsOf :: [FinProduct] -> [(Int, Shifter)] -> Stock -> FinDate -> FinProduct
+cascadingBestsOf products shiftedEvals s t =
     let toParam (count, shift) = BestOfParam count s t shift
     in BestOf products (fmap toParam shiftedEvals)
 

@@ -1,7 +1,9 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TupleSections #-}
 module Payoff.Product.BestOf where
 
+import Control.Applicative
 import Control.Arrow
 import Control.Monad
 import Data.Function
@@ -13,10 +15,6 @@ import Utils.Time
 
 
 -- | Parameters for the best of behaviors
-
--- TODO - Check shifts are ordered (at construction?)
--- TODO - The problem with this model is that dependencies are not working
--- TODO - The problem with this model is that fixing is not working - but we can make it work (remove head by head - limited form)
 
 type BestOfParams = [BestOfParam]
 
@@ -33,10 +31,16 @@ shiftRefDate params shifter = fmap shiftParam params
 -- | Algorithms
 
 getBestOfDeps :: (IObservable p r) => BestOfParams -> [p] -> ObsDependencies
-getBestOfDeps = undefined -- TODO - Apply the shifters to deduce dependencies
+getBestOfDeps params products =
+    let depsByShift shift = getAllDeps $ fmap (`shiftObs` shift) products
+    in mconcat $ fmap (depsByShift . shift) params
 
 fixingBestOf :: (Monad m, IObservable p [Flow]) => BestOfParams -> [p] -> EvalProd m (BestOfParams, [p])
-fixingBestOf = undefined -- TODO - Try to fix each stage one by one
+fixingBestOf [] subProducts = pure ([], subProducts)
+fixingBestOf bs subProducts =
+    let fixed = fst <$> findBestWith (head bs) subProducts
+        recur = fixingBestOf (tail bs) =<< fixed
+    in recur <|> pure (bs, subProducts)
 
 findBests :: (Monad m, IObservable p [Flow]) => BestOfParams -> [p] -> EvalProd m ([p], [Flow])
 findBests [b] subProducts = findBestWith b subProducts -- TODO - how to handle the empty case?

@@ -1,7 +1,4 @@
-module Payoff (
-    module Payoff.Flow,
-    module Payoff.Product,
-) where
+module Payoff (module Payoffs) where
 
-import Payoff.Flow
-import Payoff.Product
+import Payoff.Flow      as Payoffs
+import Payoff.Product   as Payoffs

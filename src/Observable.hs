@@ -1,13 +1,7 @@
-module Observable (
-    module Observable.Class,
-    module Observable.Dependency,
-    module Observable.Predicate,
-    module Observable.Quantity,
-    module Observable.QuantityUtils
-) where
+module Observable (module Observables) where
 
-import Observable.Class
-import Observable.Dependency
-import Observable.Predicate
-import Observable.Quantity
-import Observable.QuantityUtils
+import Observable.Class as Observables
+import Observable.Dependency as Observables
+import Observable.Predicate as Observables
+import Observable.Quantity as Observables
+import Observable.QuantityUtils as Observables

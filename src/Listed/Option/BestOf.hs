@@ -22,6 +22,6 @@ bestOfOption (CompositeOption OptionHeader{..} bodies) t1 =
         options = fmap (simpleOptionBody t1) bodies
         evalRef = sellInstr (head bodies)
     in premium <>
-        cascadingBestsOf (zip counts shifts) options `withEvalOn` (Stock evalRef, t1)
+        cascadingBestsOf options (zip counts shifts) `withEvalOn` (Stock evalRef, t1)
 
 

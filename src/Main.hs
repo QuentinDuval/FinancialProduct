@@ -4,14 +4,11 @@ module Main (
 ) where
 
 
-import Listed.Bond
-import Listed.Option.Asian
-import Listed.Option.BestOf
-import Listed.Option.European
-
 import Control.Monad.Identity
 import Data.Monoid
 import Eval
+import Listed.Bond
+import Listed.Option
 import Prelude hiding (ifThenElse)
 import Observable
 import Payoff.Product
@@ -28,11 +25,10 @@ testP1 :: FinDate -> FinProduct
 testP1 t =
     scale (cst 1.0 + stockRate "USD" "EUR" t) $
         allOf [
-            bestOf      [trn 120 t "EUR" , trn 120 t "USD"]     `withEvalOn` (Stock "USD", t),
---            bestOfWith  [(trn 120 t "EUR", trn 120 t "USD"),
---                         (trn 120 t "USD", trn 120 t "EUR")]    `withEvalOn` (Stock "USD", t),
-            scale       (rate "EURIBOR3M" t + cst 0.33)     (trn 120 t "EUR"),
-            scale       (stock "GOLD" t * rate "LIBOR" t)   (trn 0.9 t "USD"),
+            bestOf            [trn 120 t "EUR", trn 120 t "USD"]            `withEvalOn` (Stock "USD", t),
+            cascadingBestsOf  [trn 120 t "USD", trn 120 t "EUR"] [(1, -2)]  `withEvalOn` (Stock "USD", t),
+            scale             (rate "EURIBOR3M" t + cst 0.33)     (trn 120 t "EUR"),
+            scale             (stock "GOLD" t * rate "LIBOR" t)   (trn 0.9 t "USD"),
             if stock "GOLD" t .<. cst 10.0       then trn 12 t "SILV" else trn 10 t "GOLD",
             if stock "GOLD" t .>. stock "SILV" t then trn 10 t "GOLD" else trn 10 t "SILV"]
 
@@ -80,15 +76,13 @@ mds2 t = initMds    [(Stock "GOLD"     , const 1.58)
                     [(Rate "EURIBOR3M" , \t -> 0.05 + 0.01 * sin (toDayCount t / 10) )
                     ,(Rate "LIBOR"     , \t -> 0.06 + 0.01 * cos (toDayCount t / 12) )]
 
+
 -- TODO: Write a small main loop that reads the market data as input, then ask for pricing of products?
 --       And give some example functions to show the things.
--- TODO: Remove date from tangible, and allow to set / shift date
 -- TODO: Try to represent the notion of rights? (rights to buy, rights to dividend, etc.)
--- TODO: Introduct the BestNOf (2 best products out of 3 for example)
 -- TODO: Make it easy to do simulation of flows
 -- TODO: Persist the products with (Show / Read) => plug that in the main
 -- TODO: Persist with JSON: https://www.fpcomplete.com/school/starting-with-haskell/libraries-and-frameworks/text-manipulation/json
--- TODO: Model "Best of option" => 3 options at first, one year after, keep the 2 bests, then 1 year after, keep the best, then option
 -- TODO: Bring parallelism in the monad as well
 
 

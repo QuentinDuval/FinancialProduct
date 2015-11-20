@@ -24,7 +24,7 @@ data FinProduct                                                                 
     = Empty
     | Tangible      { tangible    :: Stock,      payDate :: FinDate }               -- TODO: Add a flow type?
     | Scale         { subProduct  :: FinProduct, scaling :: ObsQuantity }
-    | AllOf         { subProducts :: [FinProduct] }
+    | AllOf         { subProducts :: [FinProduct] }                                 -- TODO: Add predicates as well?
     | FirstOf       { subProducts :: [FinProduct], predicates   :: [ObsPredicate] }
     | BestOf        { subProducts :: [FinProduct], bestOfParams :: BestOfParams }
     deriving (Show, Read, Eq, Ord)
@@ -64,9 +64,10 @@ instance IObservable FinProduct [Flow] where
     fixing Scale{..}        = Scale <$> fixing subProduct <*> fixing scaling
     fixing AllOf{..}        = AllOf <$> mapM fixing subProducts
     fixing b@BestOf{..}     = do
-        products <- mapM fixing subProducts
-        let fixed = b { subProducts = products }
-        fmap fst (findBest bestOfParams products) <|> pure fixed -- TODO - Use bestOfFixing
+        (fixedParams, fixed) <- fixingBestOf bestOfParams subProducts
+        case fixedParams of
+            [] -> fixing (allOf fixed)
+            ps -> pure (BestOf fixed fixedParams)
     fixing f@FirstOf{..}    = do
         conditions <- mapM fixing predicates
         products <- mapM fixing subProducts
@@ -108,7 +109,7 @@ findFirstProduct :: (Monad m) => [ObsPredicate] -> [FinProduct] -> EvalProd m Fi
 findFirstProduct cs ps = fromMaybe Empty <$> findFirst cs ps
 
 findBest :: (Monad m) => BestOfParams -> [FinProduct] -> EvalProd m (FinProduct, [Flow])
-findBest params products = first allOf <$> findBests {-evalObs-} params products
+findBest params products = first allOf <$> findBests params products
 
 
 

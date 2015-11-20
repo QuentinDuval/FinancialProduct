@@ -1,9 +1,5 @@
-module Eval (
-    module Eval.MarketData,
-    module Eval.Monad,
-    module Eval.Result,
-) where
+module Eval (module AllEvals) where
 
-import Eval.MarketData
-import Eval.Monad
-import Eval.Result
+import Eval.MarketData as AllEvals
+import Eval.Monad as AllEvals
+import Eval.Result as AllEvals

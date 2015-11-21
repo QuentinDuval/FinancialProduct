@@ -31,6 +31,7 @@ executable FinancialProduct
         Observable.Class
         Observable.Dependency
         Observable.Predicate
+        Observable.PredicateUtils
         Observable.Quantity
         Observable.QuantityUtils
         Payoff
@@ -39,7 +40,6 @@ executable FinancialProduct
         Payoff.Product.BestOf
         Payoff.Product.Combinator
         Payoff.Product.Core
-        Payoff.Product.FirstOf
         TestMarketData
         Utils.Foldable
         Utils.Monad

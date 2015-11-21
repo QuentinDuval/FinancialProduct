@@ -11,7 +11,6 @@ import Data.Maybe
 import Data.Monoid
 import Eval
 import Payoff.Product.BestOf
-import Payoff.Product.FirstOf
 import Payoff.Flow
 import Observable
 import Utils.Monad

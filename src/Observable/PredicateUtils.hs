@@ -1,7 +1,10 @@
-module Payoff.Product.FirstOf where
+module Observable.PredicateUtils (
+    findFirst,
+) where
 
 import Eval
-import Observable
+import Observable.Class
+import Observable.Predicate
 import Utils.Monad
 
 
@@ -12,4 +15,5 @@ findFirst cs ps = do
     let conditions = fmap evalObs cs
     firstMatch <- findM fst (zip conditions ps)
     pure (fmap snd firstMatch)
+
 

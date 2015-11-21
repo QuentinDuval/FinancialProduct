@@ -48,5 +48,5 @@ compound newDate f@Flow{..} = do
 -- | Private
 
 evalStockRate :: (Monad m) => (Stock, FinDate) -> (Stock, FinDate) -> EvalProd m Double
-evalStockRate (s1, t1) (s2, t2) = evalObs (StockObs (stockLabel s1) t1 / StockObs (stockLabel s2) t2)
+evalStockRate (s1, t1) (s2, t2) = evalObs (stock (stockLabel s1) t1 / stock (stockLabel s2) t2)
 

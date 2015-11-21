@@ -12,13 +12,6 @@ import Utils.Time
 
 -- | Helpful combinators to build products
 
-stock, rate :: String -> FinDate -> ObsQuantity
-stock = StockObs
-rate  = RateObs
-
-stockRate :: String -> String -> FinDate -> ObsQuantity     -- TODO: Try to have different kind of rates instead
-stockRate s1 s2 t = stock s1 t / stock s2 t
-
 trn :: Double -> FinDate -> String -> FinProduct
 trn qty date instr = scale (cst qty) (Tangible (Stock instr) date)
 

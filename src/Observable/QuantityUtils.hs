@@ -5,10 +5,20 @@ import Observable.Quantity
 import Utils.Time
 
 
--- | Nice instances to help manipulating observable quantities
+-- | Constructors
+
+stock, rate :: String -> FinDate -> ObsQuantity
+stock = StockObs
+rate  = RateObs
+
+stockRate :: String -> String -> FinDate -> ObsQuantity     -- TODO: Try to have different kind of rates instead
+stockRate s1 s2 t = stock s1 t / stock s2 t
 
 liftQtyOp :: QtyOp -> ObsQuantity -> ObsQuantity -> ObsQuantity
 liftQtyOp op a b = CombineQty op [a, b]
+
+
+-- | Nice instances to help manipulating observable quantities
 
 instance Num ObsQuantity where
     (+)     = liftQtyOp Add

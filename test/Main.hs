@@ -5,10 +5,12 @@ import System.Exit (exitFailure)
 import Test.HUnit
 
 
-import qualified Tests.Observables as Observables
+import Tests.Observables
 
 
 main :: IO ()
 main = do
-    r <- runTestTT $ TestList [Observables.runQuantityTests]
+    r <- runTestTT $ TestList
+        [ runQuantityTests
+        , runPredicateTests]
     when (failures r > 0) exitFailure

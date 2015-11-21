@@ -101,13 +101,6 @@ main = do
         f <- [evalObs, evalKnownFlows]
         return $ testEval prod mds f
 
-    putStrLn "\nTest of fixing of observables:"
-    let testObs obsValue = runIdentity $ resultWithEnv (testMdsAccess $ mds1 t) (fixing obsValue)
-    mapM_ print $ testObs <$> [cst 1.0, stock "EUR" t, rate "EURIBOR3M" t, stock "UNKNOWN" t, rate "UNKNOWN" t,
-                               cst 1.0 + stock "EUR" t, stock "EUR" t * rate "EURIBOR3M" t, stockRate "EUR" "UNKNOWN" t]
-    mapM_ print $ testObs <$> [cst 1.0 .<. stock "EUR" t, stock "EUR" t .==. rate "EURIBOR3M" t,
-                               (stock "GOLD" t .>. stock "SILV" t) .&&. cst True .||. cst False]
-
     putStrLn "\nTest of fixing of products:"
     let testFix prod mds = runIdentity $ resultWithEnv (testMdsAccess mds) (fixing prod)
     mapM_ print $ do

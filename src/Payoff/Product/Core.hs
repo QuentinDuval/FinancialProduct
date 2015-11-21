@@ -25,7 +25,7 @@ data FinProduct                                                                 
     | Tangible      { tangible    :: Stock,      payDate :: FinDate }               -- TODO: Add a flow type?
     | Scale         { subProduct  :: FinProduct, scaling :: ObsQuantity }
     | AllOf         { subProducts :: [FinProduct] }                                 -- TODO: Add predicates as well?
-    | FirstOf       { subProducts :: [FinProduct], predicates   :: [ObsPredicate] }
+    | FirstOf       { subProducts :: [FinProduct], predicates   :: [ObsPredicate] } -- TODO: Generalize for quantities as well
     | BestOf        { subProducts :: [FinProduct], bestOfParams :: BestOfParams }
     deriving (Show, Read, Eq, Ord)
 

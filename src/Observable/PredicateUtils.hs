@@ -7,6 +7,7 @@ import Control.Monad
 import Eval
 import Observable.Class
 import Observable.Predicate
+import Observable.Types
 import Utils.Monad
 
 

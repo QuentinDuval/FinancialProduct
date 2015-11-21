@@ -11,24 +11,11 @@ import Control.Applicative
 import Eval
 import Observable.Class
 import Observable.Dependency
+import Observable.Types
 import Utils.Time
 
 
--- | Observable quantities
 
-data QtyTransf = Neg | Abs | Sign | Inv
-    deriving (Show, Read, Eq, Ord)
-
-data QtyOp = Add | Mult
-    deriving (Show, Read, Eq, Ord)
-
-data ObsQuantity
-    = CstQuantity   { cstQty :: Double }
-    | StockObs      { obsId  :: StockId, obsTime :: FinDate }
-    | RateObs       { obsId  :: RateId,  obsTime :: FinDate }
-    | Transf        { transf :: QtyTransf, subQty :: ObsQuantity }
-    | CombineQty    { qtyOp  :: QtyOp, quantities  :: [ObsQuantity] }
-    deriving (Show, Read, Eq, Ord)
 
 liftQtyOp :: QtyOp -> ObsQuantity -> ObsQuantity -> ObsQuantity
 liftQtyOp op a b = CombineQty op [a, b]

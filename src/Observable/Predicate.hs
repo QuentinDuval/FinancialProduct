@@ -7,23 +7,9 @@ import Data.Monoid
 import Eval
 import Observable.Class
 import Observable.Quantity
+import Observable.Types
 import Utils.Foldable
 
-
-
--- | Predicates based on observations
-
-data QuantityRel = IsLT | IsGT | IsEQ | IsLTE | IsGTE | IsNEQ
-    deriving (Show, Read, Eq, Ord)
-
-data PredicateOp = And | Or | Nor
-    deriving (Show, Read, Eq, Ord)
-
-data ObsPredicate
-    = CstBool       { cstBool   :: Bool }
-    | QuantityRel   { qtyRel    :: QuantityRel, targets :: [ObsQuantity] }
-    | CombinePred   { predOp    :: PredicateOp, preds :: [ObsPredicate] }
-    deriving (Show, Read, Eq, Ord)
 
 
 -- | Utils

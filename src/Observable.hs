@@ -6,3 +6,4 @@ import Observable.Predicate as Observables
 import Observable.PredicateUtils as Observables
 import Observable.Quantity as Observables
 import Observable.QuantityUtils as Observables
+import Observable.Types as Observables

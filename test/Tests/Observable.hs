@@ -1,6 +1,5 @@
 module Tests.Observable (
-    runQuantityTests,
-    runPredicateTests,
+    runObservableTests,
 ) where
 
 import Control.Monad.Identity
@@ -24,14 +23,13 @@ mds t = initMds
     [(Rate "EURIBOR3M" , const 0.05)
     ,(Rate "LIBOR"     , const 0.06)]
 
+runObservableTests :: Test
+runObservableTests =
+    let t = fromGregorian 2015 22 21
+    in TestList [quantityFixing t, predicateFixing t, dependenciesTest t]
 
 
 -- | Quantity related tests
-
-runQuantityTests :: Test
-runQuantityTests =
-    let t = fromGregorian 2015 22 21
-    in TestList [quantityFixing t, quantityDeps t]
 
 quantityFixing :: FinDate -> Test
 quantityFixing t = TestList
@@ -45,31 +43,33 @@ quantityFixing t = TestList
     , fixingTest t "Partial fixing"    (CombineQty Mult [CstQuantity 1.0, Transf Inv (StockObs "UNKNOWN" t)])
                                        (stockRate "USD" "UNKNOWN" t)]
 
-quantityDeps :: FinDate -> Test
-quantityDeps t =
-    let expectedDeps = ObsDependencies
-            { stockDeps = [("EUR", t), ("USD", t), ("USD", addDay t 2)]
-            , rateDeps  = [("EURIBOR3M", addDay t 2)] }
-        obsQuantity = cst 2 * stock "EUR" t * stock "USD" t
-                      + shiftObs (cst 1.1 * rate "EURIBOR3M" t + stock "USD" t) 2
-    in TestCase $ do
-        assertEqual "Empty dependencies"    (ObsDependencies [] []) (getDeps (CstQuantity 1.0))
-        assertEqual "Composite expression"  expectedDeps            (getDeps obsQuantity)
-
 
 -- | Predicate related tests
 
-runPredicateTests :: Test
-runPredicateTests =
-    let t = fromGregorian 2015 22 21
-    in TestList
+predicateFixing :: FinDate -> Test
+predicateFixing t = TestList
         [ fixingTest t "Constant boolean"  (CstBool True)        (cst True)
         , fixingTest t "Compare quantity"  (CstBool True)        (cst 1.0 .<. stock "EUR" t)
         , fixingTest t "Equate quantity"   (CstBool False)       (stock "EUR" t .==. rate "EURIBOR3M" t)
         , fixingTest t "Combining more"    (CstBool True)        ((stock "GOLD" t .>. stock "SILV" t) .&&. cst True .||. cst False)
         , fixingTest t "Unknown source"    (QuantityRel IsLTE [CstQuantity 1.0 , StockObs "UNKNOWN" t])
-                                           (stock "USD" t .<=. stock "UNKNOWN" t)
-        ]
+                                           (stock "USD" t .<=. stock "UNKNOWN" t)]
+
+
+-- | Dependency declaration tests
+
+dependenciesTest :: FinDate -> Test
+dependenciesTest t =
+    let expectedDeps = ObsDependencies
+            { stockDeps = [("EUR", t), ("USD", t), ("USD", addDay t 2)]
+            , rateDeps  = [("EURIBOR3M", addDay t 2)] }
+
+        obsQuantity  = cst 2 * stock "EUR" t * stock "USD" t + shiftObs (cst 1.1 * rate "EURIBOR3M" t + stock "USD" t) 2
+        obsPredicate = (stock "EUR" t .>. stock "USD" t) .||. shiftObs ((rate "EURIBOR3M" t + stock "USD" t) .==. cst 2.0) 2
+    in TestCase $ do
+        assertEqual "Empty dependencies"    (ObsDependencies [] []) (getDeps (CstQuantity 1.0))
+        assertEqual "Quantity expression"   expectedDeps            (getDeps obsQuantity)
+        assertEqual "Predicate expression"  expectedDeps            (getDeps obsPredicate)
 
 
 -- | Fixture (utils)

@@ -5,7 +5,7 @@ import System.Exit (exitFailure)
 import Test.HUnit
 
 
-import Tests.Observables
+import Tests.Observable
 
 
 main :: IO ()

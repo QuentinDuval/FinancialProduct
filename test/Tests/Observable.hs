@@ -1,4 +1,4 @@
-module Tests.Observables (
+module Tests.Observable (
     runQuantityTests,
     runPredicateTests,
 ) where

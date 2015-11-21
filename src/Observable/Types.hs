@@ -17,7 +17,8 @@ data ObsQuantity
     | StockObs      { obsId  :: StockId, obsTime :: FinDate }
     | RateObs       { obsId  :: RateId,  obsTime :: FinDate }
     | Transf        { transf :: QtyTransf, subQty :: ObsQuantity }
-    | CombineQty    { qtyOp  :: QtyOp, quantities :: [ObsQuantity] } -- TODO: add a new type "conditional qty" to combine qty and pred?
+    | CombineQty    { qtyOp  :: QtyOp, quantities :: [ObsQuantity] }
+    -- TODO: add a new type "conditional qty" to combine qty and pred?
     deriving (Show, Read, Eq, Ord)
 
 

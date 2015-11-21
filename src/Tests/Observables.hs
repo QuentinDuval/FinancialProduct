@@ -52,9 +52,9 @@ runPredicateTests =
         ]
 
 
-fixingTestFct mds obsValue =
-    runIdentity $ resultWithEnv (testMdsAccess mds) (fixing obsValue)
-
+fixingSuccess :: (IObservable a b, Eq a, Show a) => FinDate -> String -> a -> a -> Test
 fixingSuccess t str expected expression =
-    TestCase $ assertEqual str (Done expected) (fixingTestFct (mds t) expression)
+    let mdsAccess = testMdsAccess (mds t)
+        testFct obsValue = runIdentity $ resultWithEnv mdsAccess (fixing obsValue)
+    in TestCase $ assertEqual str (Done expected) (testFct expression)
 

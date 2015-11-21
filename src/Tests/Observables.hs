@@ -25,10 +25,15 @@ mds t = initMds
 runQuantityTests =
     let t = fromGregorian 2015 22 21
     in TestList
-        [ fixingSuccess t "Constant quantity" (CstQuantity 1.0)         (cst 1.0)
-        , fixingSuccess t "Rate quantity"     (CstQuantity 0.05)        (rate "EURIBOR3M" t)
-        , fixingSuccess t "Unknown rate"      (RateObs "UNKNOWN" t)     (rate "UNKNOWN" t)
-        , fixingSuccess t "Unknown stock"     (StockObs "UNKNOWN" t)    (stock "UNKNOWN" t)
+        [ fixingSuccess t "Constant quantity" (CstQuantity 1.0)                 (cst 1.0)
+        , fixingSuccess t "Rate quantity"     (CstQuantity 0.05)                (rate "EURIBOR3M" t)
+        , fixingSuccess t "Moving stock"      (CstQuantity 1.0133461247168631)  (stock "EUR" t)
+        , fixingSuccess t "Combining const"   (CstQuantity 3.1)                 (cst 2 * stock "USD" t + cst 1.1)
+        , fixingSuccess t "Combining vars"    (CstQuantity 0.05)                (rate "EURIBOR3M" t * stock "USD" t)
+        , fixingSuccess t "Unknown rate"      (RateObs "UNKNOWN" t)             (rate "UNKNOWN" t)
+        , fixingSuccess t "Unknown stock"     (StockObs "UNKNOWN" t)            (stock "UNKNOWN" t)
+        , fixingSuccess t "Partial fixing"    (CombineQty Mult [CstQuantity 1.0, Transf Inv (StockObs "UNKNOWN" t)])
+                                              (stockRate "USD" "UNKNOWN" t)
         ]
 
 

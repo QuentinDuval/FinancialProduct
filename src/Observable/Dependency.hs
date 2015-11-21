@@ -11,7 +11,7 @@ import Utils.Time
 data ObsDependencies = ObsDependencies {
     stockDeps :: [(StockId, FinDate)],
     rateDeps  :: [(RateId, FinDate)]
-} deriving(Show)
+} deriving(Show, Read, Eq, Ord)
 
 instance Monoid ObsDependencies where
     mempty  = ObsDependencies [] []

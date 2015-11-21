@@ -13,6 +13,8 @@ import Utils.Time
 
 
 
+-- | Fixture (test set)
+
 mds :: FinDate -> TestMarketData
 mds t = initMds
     [(Stock "GOLD"     , const 15.8)
@@ -23,38 +25,71 @@ mds t = initMds
     ,(Rate "LIBOR"     , const 0.06)]
 
 
+
+-- | Quantity related tests
+
 runQuantityTests :: Test
 runQuantityTests =
     let t = fromGregorian 2015 22 21
-    in TestList
-        [ fixingSuccess t "Constant quantity" (CstQuantity 1.0)                 (cst 1.0)
-        , fixingSuccess t "Rate quantity"     (CstQuantity 0.05)                (rate "EURIBOR3M" t)
-        , fixingSuccess t "Moving stock"      (CstQuantity 1.0133461247168631)  (stock "EUR" t)
-        , fixingSuccess t "Combining const"   (CstQuantity 3.1)                 (cst 2 * stock "USD" t + cst 1.1)
-        , fixingSuccess t "Combining vars"    (CstQuantity 0.05)                (rate "EURIBOR3M" t * stock "USD" t)
-        , fixingSuccess t "Unknown rate"      (RateObs "UNKNOWN" t)             (rate "UNKNOWN" t)
-        , fixingSuccess t "Unknown stock"     (StockObs "UNKNOWN" t)            (stock "UNKNOWN" t)
-        , fixingSuccess t "Partial fixing"    (CombineQty Mult [CstQuantity 1.0, Transf Inv (StockObs "UNKNOWN" t)])
-                                              (stockRate "USD" "UNKNOWN" t)
-        ]
+    in TestList [quantityFixing t, quantityDeps t]
 
+quantityFixing :: FinDate -> Test
+quantityFixing t = TestList
+    [ fixingTest t "Constant quantity" (CstQuantity 1.0)                 (cst 1.0)
+    , fixingTest t "Rate quantity"     (CstQuantity 0.05)                (rate "EURIBOR3M" t)
+    , fixingTest t "Moving stock"      (CstQuantity 1.0133461247168631)  (stock "EUR" t)
+    , fixingTest t "Combining const"   (CstQuantity 3.1)                 (cst 2 * stock "USD" t + cst 1.1)
+    , fixingTest t "Combining vars"    (CstQuantity 0.05)                (rate "EURIBOR3M" t * stock "USD" t)
+    , fixingTest t "Unknown rate"      (RateObs "UNKNOWN" t)             (rate "UNKNOWN" t)
+    , fixingTest t "Unknown stock"     (StockObs "UNKNOWN" t)            (stock "UNKNOWN" t)
+    , fixingTest t "Partial fixing"    (CombineQty Mult [CstQuantity 1.0, Transf Inv (StockObs "UNKNOWN" t)])
+                                       (stockRate "USD" "UNKNOWN" t)]
+
+quantityDeps :: FinDate -> Test
+quantityDeps t =
+    let expectedDeps = ObsDependencies
+            { stockDeps = [("EUR", t), ("USD", t), ("USD", addDay t 2)]
+            , rateDeps  = [("EURIBOR3M", addDay t 2)] }
+        obsQuantity = cst 2 * stock "EUR" t * stock "USD" t
+                      + shiftObs (cst 1.1 * rate "EURIBOR3M" t + stock "USD" t) 2
+    in TestCase $ do
+        assertEqual "Empty dependencies"    (ObsDependencies [] []) (getDeps (CstQuantity 1.0))
+        assertEqual "Composite expression"  expectedDeps            (getDeps obsQuantity)
+
+
+-- | Predicate related tests
 
 runPredicateTests :: Test
 runPredicateTests =
     let t = fromGregorian 2015 22 21
     in TestList
-        [ fixingSuccess t "Constant boolean"  (CstBool True)        (cst True)
-        , fixingSuccess t "Compare quantity"  (CstBool True)        (cst 1.0 .<. stock "EUR" t)
-        , fixingSuccess t "Equate quantity"   (CstBool False)       (stock "EUR" t .==. rate "EURIBOR3M" t)
-        , fixingSuccess t "Combining more"    (CstBool True)        ((stock "GOLD" t .>. stock "SILV" t) .&&. cst True .||. cst False)
-        , fixingSuccess t "Unknown source"    (QuantityRel IsLTE [CstQuantity 1.0 , StockObs "UNKNOWN" t])
-                                              (stock "USD" t .<=. stock "UNKNOWN" t)
+        [ fixingTest t "Constant boolean"  (CstBool True)        (cst True)
+        , fixingTest t "Compare quantity"  (CstBool True)        (cst 1.0 .<. stock "EUR" t)
+        , fixingTest t "Equate quantity"   (CstBool False)       (stock "EUR" t .==. rate "EURIBOR3M" t)
+        , fixingTest t "Combining more"    (CstBool True)        ((stock "GOLD" t .>. stock "SILV" t) .&&. cst True .||. cst False)
+        , fixingTest t "Unknown source"    (QuantityRel IsLTE [CstQuantity 1.0 , StockObs "UNKNOWN" t])
+                                           (stock "USD" t .<=. stock "UNKNOWN" t)
         ]
 
 
-fixingSuccess :: (IObservable a b, Eq a, Show a) => FinDate -> String -> a -> a -> Test
-fixingSuccess t str expected expression =
+-- | Fixture (utils)
+
+fixingTest :: (IObservable a b, Eq a, Show a) => FinDate -> String -> a -> a -> Test
+fixingTest t str expected expression =
     let mdsAccess = testMdsAccess (mds t)
         testFct obsValue = runIdentity $ resultWithEnv mdsAccess (fixing obsValue)
     in TestCase $ assertEqual str (Done expected) (testFct expression)
+
+
+--evalSuccess :: (IObservable a a, Eq a, Show a) => FinDate -> String -> a -> a -> Test
+--evalSuccess t str expected expression =
+--    let mdsAccess = testMdsAccess (mds t)
+--        testFct obsValue = runIdentity $ resultWithEnv mdsAccess (evalObs obsValue)
+--    in TestCase $ assertEqual str (Done expected) (testFct expression)
+--
+--evalFailure :: (IObservable a a, Eq a, Show a) => FinDate -> String -> a -> Test
+--evalFailure t str expression =
+--    let mdsAccess = testMdsAccess (mds t)
+--        testFct obsValue = runIdentity $ resultWithEnv mdsAccess (evalObs obsValue)
+--    in TestCase $ assertEqual str (Fail "") (testFct expression)
 

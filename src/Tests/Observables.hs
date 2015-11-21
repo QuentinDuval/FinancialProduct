@@ -1,5 +1,5 @@
 module Tests.Observables (
-    runTests,
+    runQuantityTests,
 ) where
 
 import Control.Monad.Identity
@@ -22,11 +22,21 @@ mds t = initMds
     ,(Rate "LIBOR"     , const 0.06)]
 
 
-runTests = do
+runQuantityTests =
     let t = fromGregorian 2015 22 21
-    let testFct obsValue = runIdentity $ resultWithEnv (testMdsAccess $ mds t) (fixing obsValue)
-    TestCase $
-        assertEqual "Boom Boom Boom" (Done $ CstQuantity 0.05) (testFct $ rate "EURIBOR3M" t)
+    in TestList
+        [ fixingSuccess t "Constant quantity" (CstQuantity 1.0)         (cst 1.0)
+        , fixingSuccess t "Rate quantity"     (CstQuantity 0.05)        (rate "EURIBOR3M" t)
+        , fixingSuccess t "Unknown rate"      (RateObs "UNKNOWN" t)     (rate "UNKNOWN" t)
+        , fixingSuccess t "Unknown stock"     (StockObs "UNKNOWN" t)    (stock "UNKNOWN" t)
+        ]
+
+
+fixingTestFct mds obsValue =
+    runIdentity $ resultWithEnv (testMdsAccess mds) (fixing obsValue)
+
+fixingSuccess t str expected expression =
+    TestCase $ assertEqual str (Done expected) (fixingTestFct (mds t) expression)
 
 
 --    mapM_ print $ testObs <$> [cst 1.0, stock "EUR" t, rate "EURIBOR3M" t, stock "UNKNOWN" t, rate "UNKNOWN" t,

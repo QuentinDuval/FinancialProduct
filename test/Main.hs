@@ -10,5 +10,5 @@ import qualified Tests.Observables as Observables
 
 main :: IO ()
 main = do
-    r <- runTestTT $ TestList [Observables.runTests]
+    r <- runTestTT $ TestList [Observables.runQuantityTests]
     when (failures r > 0) exitFailure

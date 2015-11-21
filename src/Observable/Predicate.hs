@@ -1,6 +1,9 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RecordWildCards #-}
-module Observable.Predicate where
+module Observable.Predicate (
+    ObsPredicate(..),
+
+) where
 
 import Control.Applicative
 import Data.Monoid
@@ -10,24 +13,6 @@ import Observable.Quantity
 import Observable.Types
 import Utils.Foldable
 
-
-
--- | Utils
-
-(.==.), (./=.), (.>.), (.<.), (.<=.), (.>=.) :: ObsQuantity -> ObsQuantity -> ObsPredicate
-(.==.) a b = QuantityRel IsEQ [a, b]
-(./=.) a b = QuantityRel IsNEQ [a, b]
-(.>.)  a b = QuantityRel IsGT [a, b]
-(.<.)  a b = QuantityRel IsLT [a, b]
-(.<=.) a b = QuantityRel IsLTE [a, b]
-(.>=.) a b = QuantityRel IsGTE [a, b]
-
-(.&&.), (.||.) :: ObsPredicate -> ObsPredicate -> ObsPredicate
-(.&&.) a b = CombinePred And [a, b]
-(.||.) a b = CombinePred Or  [a, b]
-
-(.!.) :: ObsPredicate -> ObsPredicate
-(.!.) a = CombinePred Nor [a]
 
 
 -- | Implementations for observable

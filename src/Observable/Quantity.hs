@@ -4,7 +4,6 @@ module Observable.Quantity (
     QtyTransf(..),
     QtyOp(..),
     ObsQuantity(..),
-    liftQtyOp
 ) where
 
 import Control.Applicative
@@ -13,12 +12,6 @@ import Observable.Class
 import Observable.Dependency
 import Observable.Types
 import Utils.Time
-
-
-
-
-liftQtyOp :: QtyOp -> ObsQuantity -> ObsQuantity -> ObsQuantity
-liftQtyOp op a b = CombineQty op [a, b]
 
 
 -- | Implementations for observable

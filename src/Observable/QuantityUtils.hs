@@ -7,6 +7,9 @@ import Utils.Time
 
 -- | Nice instances to help manipulating observable quantities
 
+liftQtyOp :: QtyOp -> ObsQuantity -> ObsQuantity -> ObsQuantity
+liftQtyOp op a b = CombineQty op [a, b]
+
 instance Num ObsQuantity where
     (+)     = liftQtyOp Add
     (*)     = liftQtyOp Mult

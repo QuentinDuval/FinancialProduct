@@ -63,7 +63,6 @@ dependenciesTest t =
     let expectedDeps = ObsDependencies
             { stockDeps = [("EUR", t), ("USD", t), ("USD", addDay t 2)]
             , rateDeps  = [("EURIBOR3M", addDay t 2)] }
-
         obsQuantity  = cst 2 * stock "EUR" t * stock "USD" t + shiftObs (cst 1.1 * rate "EURIBOR3M" t + stock "USD" t) 2
         obsPredicate = (stock "EUR" t .>. stock "USD" t) .||. shiftObs ((rate "EURIBOR3M" t + stock "USD" t) .==. cst 2.0) 2
     in TestCase $ do
@@ -80,16 +79,4 @@ fixingTest t str expected expression =
         testFct obsValue = runIdentity $ resultWithEnv mdsAccess (fixing obsValue)
     in TestCase $ assertEqual str (Done expected) (testFct expression)
 
-
---evalSuccess :: (IObservable a a, Eq a, Show a) => FinDate -> String -> a -> a -> Test
---evalSuccess t str expected expression =
---    let mdsAccess = testMdsAccess (mds t)
---        testFct obsValue = runIdentity $ resultWithEnv mdsAccess (evalObs obsValue)
---    in TestCase $ assertEqual str (Done expected) (testFct expression)
---
---evalFailure :: (IObservable a a, Eq a, Show a) => FinDate -> String -> a -> Test
---evalFailure t str expression =
---    let mdsAccess = testMdsAccess (mds t)
---        testFct obsValue = runIdentity $ resultWithEnv mdsAccess (evalObs obsValue)
---    in TestCase $ assertEqual str (Fail "") (testFct expression)
 

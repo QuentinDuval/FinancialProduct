@@ -24,14 +24,14 @@ instance IWrappable ObsQuantity Double where
     unwrap CstQuantity{..}  = Just cstQty
     unwrap _                = Nothing
 
-instance IObservable ObsQuantity Double where
+
+instance IFixable ObsQuantity where
 
     getDeps CstQuantity{}       = mempty
     getDeps StockObs{..}        = ObsDependencies { stockDeps = [(obsId, obsTime)], rateDeps = [] }
     getDeps RateObs{..}         = ObsDependencies { stockDeps = [], rateDeps = [(obsId, obsTime)] }
     getDeps Transf{..}          = getDeps subQty
     getDeps CombineQty{..}      = getAllDeps quantities
---    getDeps ConditionalQty{..}  = getAllDeps conds <> getAllDeps quantities
 
     fixing c@CstQuantity{}  = pure c
     fixing CombineQty{..}   = do
@@ -41,6 +41,9 @@ instance IObservable ObsQuantity Double where
         fixedQty <- fixing subQty
         pure $ ifKnown fixedQty (CstQuantity . applyQtyTransf transf) (Transf transf)
     fixing o                = fmap CstQuantity (evalObs o) <|> pure o
+
+
+instance IObservable ObsQuantity Double where
 
     evalObs CstQuantity{..} = pure cstQty
     evalObs StockObs{..}    = getStock obsId obsTime

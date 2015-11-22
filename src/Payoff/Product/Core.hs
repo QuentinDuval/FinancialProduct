@@ -49,7 +49,7 @@ scale q p           = Scale p q
 
 -- | Evaluation of the production of financial products
 
-instance IObservable FinProduct [Flow] where
+instance IFixable FinProduct where
 
     getDeps Empty           = mempty
     getDeps Tangible{}      = mempty
@@ -68,6 +68,8 @@ instance IObservable FinProduct [Flow] where
         case fixedParams of
             [] -> fixing (allOf fixed)
             ps -> pure (BestOf fixed fixedParams)
+
+instance IObservable FinProduct [Flow] where
 
     evalObs Empty           = pure []
     evalObs Tangible{..}    = pure [Flow 1 payDate tangible]

@@ -11,9 +11,11 @@ import Utils.Time
 
 -- | Class for the observables and the operations on them
 
-class IObservable a b | a -> b where
+class IFixable a where
     getDeps  ::            a -> ObsDependencies
     fixing   :: Monad m => a -> EvalProd m a
+
+class (IFixable a) => IObservable a b | a -> b where
     evalObs  :: Monad m => a -> EvalProd m b
     shiftObs ::            a -> Shifter -> a
 

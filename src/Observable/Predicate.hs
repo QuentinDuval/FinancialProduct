@@ -22,7 +22,7 @@ instance IWrappable ObsPredicate Bool where
     unwrap CstBool{..}      = Just cstBool
     unwrap _                = Nothing
 
-instance IObservable ObsPredicate Bool where
+instance IFixable ObsPredicate where
 
     getDeps CstBool{}       = mempty
     getDeps QuantityRel{..} = getAllDeps targets
@@ -35,6 +35,9 @@ instance IObservable ObsPredicate Bool where
     fixing CombinePred{..}  = do
         fixedPreds <- mapM fixing preds
         pure $ ifAllKnown fixedPreds (CstBool . applyPredOp predOp) (CombinePred predOp)
+
+
+instance IObservable ObsPredicate Bool where
 
     evalObs CstBool{..}     = pure cstBool
     evalObs QuantityRel{..} = applyQtyRel qtyRel <$> mapM evalObs targets

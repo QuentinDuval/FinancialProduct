@@ -35,7 +35,7 @@ findFirst cs ps = do
     firstMatch <- findM fst (zip conditions ps)
     pure (fmap snd firstMatch)
 
-findFirstFixing :: (Monad m, IObservable p a) => [ObsPredicate] -> [p] -> ([ObsPredicate] -> [p] -> p) -> EvalProd m (Maybe p)
+findFirstFixing :: (Monad m, IFixable p) => [ObsPredicate] -> [p] -> ([ObsPredicate] -> [p] -> p) -> EvalProd m (Maybe p)
 findFirstFixing cs ps fallback = do
     conditions <- mapM fixing cs
     products <- mapM fixing ps

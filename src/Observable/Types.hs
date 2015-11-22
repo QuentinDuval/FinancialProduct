@@ -18,7 +18,7 @@ data ObsQuantity
     | RateObs       { obsId  :: RateId,  obsTime :: FinDate }
     | Transf        { transf :: QtyTransf, subQty :: ObsQuantity }
     | CombineQty    { qtyOp  :: QtyOp, quantities :: [ObsQuantity] }
-    -- TODO: add a new type "conditional qty" to combine qty and pred?
+    -- TODO: add a way to have predicates supported in it (require inv of dep)
     deriving (Show, Read, Eq, Ord)
 
 

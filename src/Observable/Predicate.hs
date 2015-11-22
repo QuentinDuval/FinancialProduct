@@ -43,7 +43,7 @@ instance IObservable ObsPredicate Bool where
     evalObs QuantityRel{..} = applyQtyRel qtyRel <$> mapM evalObs targets
     evalObs CombinePred{..} = applyPredOp predOp <$> mapM evalObs preds
 
-    shiftObs o@CstBool{} _         = o
+    shiftObs o@CstBool{} _             = o
     shiftObs o@QuantityRel{..} shifter = o { targets = fmap (`shiftObs` shifter) targets }
     shiftObs o@CombinePred{..} shifter = o { preds   = fmap (`shiftObs` shifter) preds }
 

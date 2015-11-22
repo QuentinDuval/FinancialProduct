@@ -26,7 +26,7 @@ class IWrappable a b | a -> b where
 
 -- | Utils for observable values
 
-getAllDeps :: (IObservable a b) => [a] -> ObsDependencies
+getAllDeps :: (IFixable a) => [a] -> ObsDependencies
 getAllDeps = mconcat . fmap getDeps
 
 

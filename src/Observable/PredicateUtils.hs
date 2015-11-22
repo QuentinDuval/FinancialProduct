@@ -1,5 +1,6 @@
 module Observable.PredicateUtils where
 
+import Control.Applicative
 import Control.Monad
 import Eval
 import Observable.Class
@@ -33,6 +34,13 @@ findFirst cs ps = do
     let conditions = fmap evalObs cs
     firstMatch <- findM fst (zip conditions ps)
     pure (fmap snd firstMatch)
+
+findFirstFixing :: (Monad m, IObservable p a) => [ObsPredicate] -> [p] -> ([ObsPredicate] -> [p] -> p) -> EvalProd m (Maybe p)
+findFirstFixing cs ps fallback = do
+    conditions <- mapM fixing cs
+    products <- mapM fixing ps
+    let fixed = fallback conditions products
+    findFirst conditions products <|> pure (Just fixed)
 
 
 -- Algorithm to find all elements matching their respective predicate

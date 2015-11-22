@@ -13,12 +13,12 @@ data QtyOp = Add | Mult
     deriving (Show, Read, Eq, Ord)
 
 data ObsQuantity
-    = CstQuantity   { cstQty :: Double }
-    | StockObs      { obsId  :: StockId, obsTime :: FinDate }
-    | RateObs       { obsId  :: RateId,  obsTime :: FinDate }
-    | Transf        { transf :: QtyTransf, subQty :: ObsQuantity }
-    | CombineQty    { qtyOp  :: QtyOp, quantities :: [ObsQuantity] }
-    -- TODO: add a way to have predicates supported in it (require inv of dep)
+    = CstQuantity    { cstQty :: Double }
+    | StockObs       { obsId  :: StockId, obsTime :: FinDate }
+    | RateObs        { obsId  :: RateId,  obsTime :: FinDate }
+    | Transf         { transf :: QtyTransf, subQty :: ObsQuantity }
+    | CombineQty     { qtyOp  :: QtyOp, quantities :: [ObsQuantity] }
+--    | ConditionalQty { conds  :: [ObsPredicate], quantities :: [ObsQuantity] }
     deriving (Show, Read, Eq, Ord)
 
 
@@ -35,4 +35,4 @@ data ObsPredicate
     | QuantityRel   { qtyRel    :: QuantityRel, targets :: [ObsQuantity] }
     | CombinePred   { predOp    :: PredicateOp, preds :: [ObsPredicate] }
     deriving (Show, Read, Eq, Ord)
-
+    -- Use the inversion of dependencies for the obs predicate that can apply on so many things

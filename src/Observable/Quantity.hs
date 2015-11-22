@@ -7,11 +7,14 @@ module Observable.Quantity (
 ) where
 
 import Control.Applicative
+import Data.Monoid
 import Eval
 import Observable.Class
 import Observable.Dependency
 import Observable.Types
+import Utils.Foldable
 import Utils.Time
+
 
 
 -- | Implementations for observable
@@ -23,11 +26,12 @@ instance IWrappable ObsQuantity Double where
 
 instance IObservable ObsQuantity Double where
 
-    getDeps CstQuantity{}   = mempty
-    getDeps StockObs{..}    = ObsDependencies { stockDeps = [(obsId, obsTime)], rateDeps = [] }
-    getDeps RateObs{..}     = ObsDependencies { stockDeps = [], rateDeps = [(obsId, obsTime)] }
-    getDeps Transf{..}      = getDeps subQty
-    getDeps CombineQty{..}  = getAllDeps quantities
+    getDeps CstQuantity{}       = mempty
+    getDeps StockObs{..}        = ObsDependencies { stockDeps = [(obsId, obsTime)], rateDeps = [] }
+    getDeps RateObs{..}         = ObsDependencies { stockDeps = [], rateDeps = [(obsId, obsTime)] }
+    getDeps Transf{..}          = getDeps subQty
+    getDeps CombineQty{..}      = getAllDeps quantities
+--    getDeps ConditionalQty{..}  = getAllDeps conds <> getAllDeps quantities
 
     fixing c@CstQuantity{}  = pure c
     fixing CombineQty{..}   = do
@@ -62,4 +66,7 @@ applyQtyTransf Inv   = recip
 applyQtyOp :: QtyOp -> Double -> Double -> Double
 applyQtyOp Add  = (+)
 applyQtyOp Mult = (*)
+
+
+
 

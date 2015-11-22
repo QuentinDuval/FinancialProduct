@@ -24,7 +24,7 @@ data FinProduct                                                                 
     | Tangible      { tangible    :: Stock,      payDate :: FinDate }               -- TODO: Add a flow type?
     | Scale         { subProduct  :: FinProduct, scaling :: ObsQuantity }
     | AllOf         { subProducts :: [FinProduct] }                                 -- TODO: Add predicates as well?
-    | FirstOf       { subProducts :: [FinProduct], predicates   :: [ObsPredicate] } -- TODO: Generalize for quantities as well
+    | FirstOf       { subProducts :: [FinProduct], predicates   :: [ObsPredicate] }
     | BestOf        { subProducts :: [FinProduct], bestOfParams :: BestOfParams }
     deriving (Show, Read, Eq, Ord)
 
@@ -62,16 +62,12 @@ instance IObservable FinProduct [Flow] where
     fixing t@Tangible{}     = pure t
     fixing Scale{..}        = Scale <$> fixing subProduct <*> fixing scaling
     fixing AllOf{..}        = AllOf <$> mapM fixing subProducts
+    fixing FirstOf{..}      = findFirstProductFixing predicates subProducts
     fixing b@BestOf{..}     = do
         (fixedParams, fixed) <- fixingBestOf bestOfParams subProducts
         case fixedParams of
             [] -> fixing (allOf fixed)
             ps -> pure (BestOf fixed fixedParams)
-    fixing f@FirstOf{..}    = do
-        conditions <- mapM fixing predicates
-        products <- mapM fixing subProducts
-        let fixed = FirstOf products conditions
-        findFirstProduct conditions products <|> pure fixed
 
     evalObs Empty           = pure []
     evalObs Tangible{..}    = pure [Flow 1 payDate tangible]
@@ -106,6 +102,9 @@ evalKnownFlows p               = evalObs p <|> pure []
 
 findFirstProduct :: (Monad m) => [ObsPredicate] -> [FinProduct] -> EvalProd m FinProduct
 findFirstProduct cs ps = fromMaybe Empty <$> findFirst cs ps
+
+findFirstProductFixing :: (Monad m) => [ObsPredicate] -> [FinProduct] -> EvalProd m FinProduct
+findFirstProductFixing cs ps = fromMaybe Empty <$> findFirstFixing cs ps (flip FirstOf)
 
 findBest :: (Monad m) => BestOfParams -> [FinProduct] -> EvalProd m (FinProduct, [Flow])
 findBest params products = first allOf <$> findBests params products

@@ -15,7 +15,7 @@ class IFixable a where
     getDeps  ::            a -> ObsDependencies
     fixing   :: Monad m => a -> EvalProd m a
 
-class (IFixable a) => IObservable a b | a -> b where
+class (IFixable a) => IObservable a b | a -> b where -- TODO: think about adding cst in it (but beware of type wrond deduction)
     evalObs  :: Monad m => a -> EvalProd m b
     unwrap   ::            a -> Maybe b
     shiftObs ::            a -> Shifter -> a

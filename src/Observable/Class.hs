@@ -17,11 +17,8 @@ class IFixable a where
 
 class (IFixable a) => IObservable a b | a -> b where
     evalObs  :: Monad m => a -> EvalProd m b
+    unwrap   ::            a -> Maybe b
     shiftObs ::            a -> Shifter -> a
-
-class IWrappable a b | a -> b where
-    cst     :: b -> a
-    unwrap  :: a -> Maybe b
 
 
 -- | Utils for observable values
@@ -32,16 +29,16 @@ getAllDeps = mconcat . fmap getDeps
 
 -- | Utils for wrappable values
 
-isKnown :: (IWrappable a b) => a -> Bool
+isKnown :: (IObservable a b) => a -> Bool
 isKnown = isJust . unwrap
 
-unsafeVal :: (IWrappable a b) => a -> b
+unsafeVal :: (IObservable a b) => a -> b
 unsafeVal = fromJust . unwrap
 
-ifKnown :: (IWrappable a b) => a -> (b -> c) -> (a -> c) -> c
+ifKnown :: (IObservable a b) => a -> (b -> c) -> (a -> c) -> c
 ifKnown obs f g = if isKnown obs then f (unsafeVal obs) else g obs
 
-ifAllKnown :: (IWrappable a b) => [a] -> ([b] -> c) -> ([a] -> c) -> c
+ifAllKnown :: (IObservable a b) => [a] -> ([b] -> c) -> ([a] -> c) -> c
 ifAllKnown allObs f g =
     if all isKnown allObs
         then f (map unsafeVal allObs)

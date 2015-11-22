@@ -7,6 +7,9 @@ import Utils.Time
 
 -- | Constructors
 
+cst :: Double -> ObsQuantity
+cst = CstQuantity
+
 stock, rate :: String -> FinDate -> ObsQuantity
 stock = StockObs
 rate  = RateObs

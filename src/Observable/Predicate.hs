@@ -17,11 +17,6 @@ import Utils.Foldable
 
 -- | Implementations for observable
 
-instance IWrappable ObsPredicate Bool where
-    cst                     = CstBool
-    unwrap CstBool{..}      = Just cstBool
-    unwrap _                = Nothing
-
 instance IFixable ObsPredicate where
 
     getDeps CstBool{}       = mempty
@@ -38,6 +33,9 @@ instance IFixable ObsPredicate where
 
 
 instance IObservable ObsPredicate Bool where
+
+    unwrap CstBool{..}      = Just cstBool
+    unwrap _                = Nothing
 
     evalObs CstBool{..}     = pure cstBool
     evalObs QuantityRel{..} = applyQtyRel qtyRel <$> mapM evalObs targets

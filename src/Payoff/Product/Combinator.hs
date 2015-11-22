@@ -23,7 +23,7 @@ ifThen :: ObsPredicate -> FinProduct -> FinProduct
 ifThen p a = eitherP p a Empty
 
 eitherP :: ObsPredicate -> FinProduct -> FinProduct -> FinProduct
-eitherP p a b = FirstOf [a, b] [p, cst True]
+eitherP p a b = FirstOf [a, b] [p, CstBool True]
 
 bestsOf :: Int -> [FinProduct] -> Stock -> FinDate -> FinProduct
 bestsOf count products = cascadingBestsOf products [(1, 0)]

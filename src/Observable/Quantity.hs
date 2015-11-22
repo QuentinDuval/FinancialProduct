@@ -19,12 +19,6 @@ import Utils.Time
 
 -- | Implementations for observable
 
-instance IWrappable ObsQuantity Double where
-    cst                     = CstQuantity
-    unwrap CstQuantity{..}  = Just cstQty
-    unwrap _                = Nothing
-
-
 instance IFixable ObsQuantity where
 
     getDeps CstQuantity{}       = mempty
@@ -44,6 +38,9 @@ instance IFixable ObsQuantity where
 
 
 instance IObservable ObsQuantity Double where
+
+    unwrap CstQuantity{..}  = Just cstQty
+    unwrap _                = Nothing
 
     evalObs CstQuantity{..} = pure cstQty
     evalObs StockObs{..}    = getStock obsId obsTime

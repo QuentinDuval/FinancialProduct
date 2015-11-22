@@ -48,10 +48,10 @@ quantityFixing t = TestList
 
 predicateFixing :: FinDate -> Test
 predicateFixing t = TestList
-        [ fixingTest t "Constant boolean"  (CstBool True)        (cst True)
+        [ fixingTest t "Constant boolean"  (CstBool True)        (CstBool True)
         , fixingTest t "Compare quantity"  (CstBool True)        (cst 1.0 .<. stock "EUR" t)
         , fixingTest t "Equate quantity"   (CstBool False)       (stock "EUR" t .==. rate "EURIBOR3M" t)
-        , fixingTest t "Combining more"    (CstBool True)        ((stock "GOLD" t .>. stock "SILV" t) .&&. cst True .||. cst False)
+        , fixingTest t "Combining more"    (CstBool True)        ((stock "GOLD" t .>. stock "SILV" t) .&&. CstBool True .||. CstBool False)
         , fixingTest t "Unknown source"    (QuantityRel IsLTE [CstQuantity 1.0 , StockObs "UNKNOWN" t])
                                            (stock "USD" t .<=. stock "UNKNOWN" t)]
 

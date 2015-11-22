@@ -71,6 +71,11 @@ instance IFixable FinProduct where
 
 instance IObservable FinProduct [Flow] where
 
+    unwrap Empty            = Just []
+    unwrap Tangible{..}     = Just [Flow 1 payDate tangible]
+    unwrap _                = Nothing --TODO: implement it for fixed products
+                                      --(use the monad Maybe - or use empty env - maybe general)
+
     evalObs Empty           = pure []
     evalObs Tangible{..}    = pure [Flow 1 payDate tangible]
     evalObs AllOf{..}       = concatMapM evalObs subProducts

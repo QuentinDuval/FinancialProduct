@@ -63,5 +63,8 @@ test-suite test-FinancialProduct
     hs-source-dirs: test src
     other-modules:
         Tests
+        Tests.EvalUtils
+        Tests.MarketDataSample
         Tests.Observable
+        Tests.Payoff
     ghc-options: -ferror-spans

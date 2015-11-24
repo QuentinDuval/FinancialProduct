@@ -64,7 +64,8 @@ findBestsImpl evalP BestOfParam{..} subProducts = do
         converted <- mapM (compound refDate <=< convert refStock) flows
         pure ((p, flows), sum $ fmap flow converted)
     let bests = fst <$> sortBy (compare `on` snd) evals
-    pure $ second concat (unzip bests)
+    let kept = take bestCount (reverse bests)
+    pure $ second concat (unzip kept)
 
 
 

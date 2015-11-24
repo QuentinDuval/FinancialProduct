@@ -4,9 +4,10 @@ module Tests (
 
 import Test.HUnit
 import Tests.Observable
+import Tests.Payoff
 
 
 runAllTests :: IO Counts
 runAllTests = runTestTT $ TestList
-    [ runObservableTests ]
+    [ runObservableTests, runPayoffTests ]
 

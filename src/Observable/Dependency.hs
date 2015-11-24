@@ -20,4 +20,3 @@ instance Monoid ObsDependencies where
         , rateDeps  = rateDeps  a <> rateDeps  b }
 
 
-

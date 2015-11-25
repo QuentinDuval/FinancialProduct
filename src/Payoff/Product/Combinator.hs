@@ -12,11 +12,11 @@ import Utils.Time
 
 -- | Helpful combinators to build products
 
-trn :: Double -> FinDate -> String -> FinProduct
-trn qty date instr = scale (cst qty) (Tangible (Stock instr) date)
+recv, send :: Double -> FinDate -> String -> FinProduct
+recv qty date instr = scale (cst qty) (Tangible (Stock instr) date)
+send qty = recv (-qty)
 
-send, give :: FinProduct -> FinProduct
-send = id
+give :: FinProduct -> FinProduct
 give = scale (cst (-1))
 
 ifThen :: ObsPredicate -> FinProduct -> FinProduct

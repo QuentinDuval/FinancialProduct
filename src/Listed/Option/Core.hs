@@ -39,6 +39,6 @@ simpleOptionBody t OptionBody{..} =
     let val = stock buyInstr t / stock sellInstr t
     in ifThen (val .>. cst strike) $
         scale quantity $ mconcat [
-            send $ trn 1      t buyInstr,
-            give $ trn strike t sellInstr]
+            recv 1      t buyInstr,
+            send strike t sellInstr]
 

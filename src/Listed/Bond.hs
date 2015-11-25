@@ -45,7 +45,7 @@ midDates PeriodInfo{..} = addDay startDate . (period *) <$> [1..periodCount-1]
 makeBond :: BondInfo -> PeriodInfo -> FinProduct
 makeBond BondInfo{..} p =
     let repayment = -1 * nominal
-        initFlow = trn nominal (startDate p) currency
-        lastFlow = trn repayment (lastDate p) currency
-        midFlows = [scale (couponRate d) (trn repayment d currency) | d <- midDates p]
+        initFlow = recv nominal (startDate p) currency
+        lastFlow = recv repayment (lastDate p) currency
+        midFlows = [scale (couponRate d) (recv repayment d currency) | d <- midDates p]
     in initFlow <> mconcat midFlows <> lastFlow

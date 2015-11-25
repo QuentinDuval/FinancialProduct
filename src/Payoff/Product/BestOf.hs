@@ -8,6 +8,7 @@ import Control.Arrow
 import Control.Monad
 import Data.Function
 import Data.List
+import Data.Monoid
 import Eval
 import Observable
 import Payoff.Flow
@@ -32,8 +33,12 @@ shiftRefDate params shifter = fmap shiftParam params
 
 getBestOfDeps :: (IObservable p r) => BestOfParams -> [p] -> ObsDependencies
 getBestOfDeps params products =
-    let depsByShift shift = getAllDeps $ fmap (`shiftObs` shift) products
-    in mconcat $ fmap (depsByShift . shift) params
+    let depsOfParam BestOfParam{..} = mempty { stockDeps = [(stockLabel refStock, refDate)] }
+        depsByShift shift = getAllDeps $ fmap (`shiftObs` shift) products
+    in mconcat [
+        mconcat (fmap (depsByShift . shift) params),
+        -- TODO list all tangibles and shift them as well!
+        mconcat (fmap depsOfParam params) ]
 
 fixingBestOf :: (Monad m, IObservable p [Flow]) => BestOfParams -> [p] -> EvalProd m (BestOfParams, [p])
 fixingBestOf [] subProducts = pure ([], subProducts)

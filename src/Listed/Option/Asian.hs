@@ -23,6 +23,6 @@ asianOption (SimpleOption OptionHeader{..} OptionBody{..}) evalGap t1
         val = averageStockRate buyInstr sellInstr ts
         opt = ifThen (val .>. cst strike) $
                 scale quantity $ mconcat [
-                    send $ trn 1      t2 buyInstr,
-                    give $ trn strike t2 sellInstr]
+                    recv 1      t2 buyInstr,
+                    send strike t2 sellInstr]
 

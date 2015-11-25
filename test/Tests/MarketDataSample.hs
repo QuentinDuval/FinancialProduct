@@ -9,8 +9,8 @@ import Utils.Time       as Exports
 
 
 
-mds :: FinDate -> TestMarketData
-mds t = initMds
+mds :: TestMarketData
+mds = initMds
     [(Stock "GOLD"     , const 15.0)
     ,(Stock "SILV"     , const 11.0)
     ,(Stock "USD"      , const 1.0)

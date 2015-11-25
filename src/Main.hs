@@ -25,15 +25,15 @@ testP1 :: FinDate -> FinProduct
 testP1 t =
     scale (cst 1.0 + stockRate "USD" "EUR" t) $
         allOf [
-            bestOf            [trn 120 t "EUR", trn 120 t "USD"]            `withEvalOn` (Stock "USD", t),
-            cascadingBestsOf  [trn 120 t "USD", trn 120 t "EUR"] [(1, -2)]  `withEvalOn` (Stock "USD", t),
-            scale             (rate "EURIBOR3M" t + cst 0.33)     (trn 120 t "EUR"),
-            scale             (stock "GOLD" t * rate "LIBOR" t)   (trn 0.9 t "USD"),
-            if stock "GOLD" t .<. cst 10.0       then trn 12 t "SILV" else trn 10 t "GOLD",
-            if stock "GOLD" t .>. stock "SILV" t then trn 10 t "GOLD" else trn 10 t "SILV"]
+            bestOf            [recv 120 t "EUR", recv 120 t "USD"]            `withEvalOn` (Stock "USD", t),
+            cascadingBestsOf  [recv 120 t "USD", recv 120 t "EUR"] [(1, -2)]  `withEvalOn` (Stock "USD", t),
+            scale             (rate "EURIBOR3M" t + cst 0.33)     (recv 120 t "EUR"),
+            scale             (stock "GOLD" t * rate "LIBOR" t)   (recv 0.9 t "USD"),
+            if stock "GOLD" t .<. cst 10.0       then recv 12 t "SILV" else recv 10 t "GOLD",
+            if stock "GOLD" t .>. stock "SILV" t then recv 10 t "GOLD" else recv 10 t "SILV"]
 
 testP2 :: FinDate -> FinProduct
-testP2 t = scale (stock "UNKNOWN" t) (trn 1 t "USD") <> testP1 t
+testP2 t = scale (stock "UNKNOWN" t) (recv 1 t "USD") <> testP1 t
 
 bond :: (FinDate -> ObsQuantity) -> FinDate -> FinProduct
 bond couponRate t = buyBond bondInfo periods
@@ -51,7 +51,7 @@ optionProducts t = [
         asianOption     optInfo 1,
         bestOfOption    compositeOpt] <*> [t]
     where
-        optHeader = OptionHeader { maturity = 5, premium = trn 5 t "USD" }
+        optHeader = OptionHeader { maturity = 5, premium = recv 5 t "USD" }
         optBody1 = OptionBody { strike = 10, quantity  = cst 27, buyInstr = "GOLD", sellInstr = "USD" }
         optBody2 = OptionBody { strike = 10, quantity  = cst 27, buyInstr = "GOLD", sellInstr = "EUR" }
         optInfo = SimpleOption optHeader optBody1

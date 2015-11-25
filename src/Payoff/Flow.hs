@@ -41,7 +41,7 @@ convert newInstr f@Flow{..} = do
 
 compound :: (Monad m) => FinDate -> Flow -> EvalProd m Flow
 compound newDate f@Flow{..} = do
-    r <- evalStockRate (flowInstr, date) (flowInstr, newDate)
+    r <- evalStockRate (flowInstr, newDate) (flowInstr, date)
     pure $ f { flow = r * flow, date = newDate }
 
 

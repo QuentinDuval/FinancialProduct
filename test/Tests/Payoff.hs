@@ -6,6 +6,7 @@ module Tests.Payoff (
 
 
 import Control.Monad.Identity
+import Data.Monoid
 import Observable
 import Payoff
 import Prelude hiding (ifThenElse)
@@ -20,7 +21,7 @@ import Utils.Syntax
 runPayoffTests :: Test
 runPayoffTests = TestList
     [ tangibleTest, giveTest, scalingTest, scalingFailTest
-    , conditionalTest, allOfTest, bestOfTest]
+    , conditionalTest, allOfTest, bestOfTest, fancyProductTest ]
 
 
 -- | Fixture
@@ -120,5 +121,33 @@ bestOfTest = runSuccess baseTest {
 
 -- TODO: add bestOf with proxy at different dates
 -- Dependencies are even harder to get right
+
+fancyProduct :: FinDate -> FinProduct
+fancyProduct futureDate =
+    scale (cst 5 + stock "GOLD" today / stock "USD" today) $
+        allOf [
+            recv 1 today "EUR",
+            if stock "EUR" futureDate .>. stock "EUR" today
+                then recv 1 futureDate "EUR"
+                else send 2 futureDate "USD"
+        ]
+
+fixedFancyProduct :: FinDate -> FinProduct
+fixedFancyProduct futureDate =
+    scale (cst 20) $
+        allOf [
+            recv 1 today "EUR",
+            recv 1 futureDate "EUR"
+        ]
+
+fancyProductTest :: Test
+fancyProductTest =
+    let futureDate = today `addDay` 10
+    in runSuccess baseTest {
+        payoff = fancyProduct futureDate,
+        depends = mempty { stockDeps = [("EUR", futureDate),("EUR", today),("GOLD", today),("USD", today)]},
+        flows = [Flow 20 today (Stock "EUR"), Flow 20 futureDate (Stock "EUR")],
+        fixed = fixedFancyProduct futureDate
+    }
 
 

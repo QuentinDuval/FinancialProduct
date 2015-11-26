@@ -27,10 +27,8 @@ data PeriodInfo = PeriodInfo {
 } deriving (Show, Read, Eq, Ord)
 
 
-buyBond :: BondInfo -> PeriodInfo -> FinProduct
-buyBond = makeBond
-
-sellBond :: BondInfo -> PeriodInfo -> FinProduct
+buyBond, sellBond :: BondInfo -> PeriodInfo -> FinProduct
+buyBond        = makeBond
 sellBond bi pi = give (makeBond bi pi)
 
 
@@ -44,8 +42,7 @@ midDates PeriodInfo{..} = addDay startDate . (period *) <$> [1..periodCount-1]
 
 makeBond :: BondInfo -> PeriodInfo -> FinProduct
 makeBond BondInfo{..} p =
-    let repayment = -1 * nominal
-        initFlow = recv nominal (startDate p) currency
-        lastFlow = recv repayment (lastDate p) currency
-        midFlows = [scale (couponRate d) (recv repayment d currency) | d <- midDates p]
+    let initFlow = recv nominal (startDate p) currency
+        lastFlow = send nominal (lastDate p) currency
+        midFlows = [scale (couponRate d) (send nominal d currency) | d <- midDates p]
     in initFlow <> mconcat midFlows <> lastFlow

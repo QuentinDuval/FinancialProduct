@@ -17,23 +17,28 @@ rate  = RateObs
 stockRate :: String -> String -> FinDate -> ObsQuantity     -- TODO: Try to have different kind of rates instead
 stockRate s1 s2 t = stock s1 t / stock s2 t
 
+liftQtyTf :: QtyTransf -> ObsQuantity -> ObsQuantity
+liftQtyTf op (CstQuantity a) = CstQuantity (applyQtyTransf op a)
+liftQtyTf op a               = Transf op a
+
 liftQtyOp :: QtyOp -> ObsQuantity -> ObsQuantity -> ObsQuantity
-liftQtyOp op a b = CombineQty op [a, b]
+liftQtyOp op (CstQuantity a) (CstQuantity b) = CstQuantity (applyQtyOp op a b)
+liftQtyOp op a b                             = CombineQty op [a, b]
 
 
 -- | Nice instances to help manipulating observable quantities
 
 instance Num ObsQuantity where
-    (+)     = liftQtyOp Add
-    (*)     = liftQtyOp Mult
-    negate  = Transf Neg
-    abs     = Transf Abs
-    signum  = Transf Sign
+    (+)         = liftQtyOp Add
+    (*)         = liftQtyOp Mult
+    negate      = liftQtyTf Neg
+    abs         = liftQtyTf Abs
+    signum      = liftQtyTf Sign
     fromInteger = cst . fromInteger
 
 instance Fractional ObsQuantity where
     fromRational = cst . fromRational
-    recip = Transf Inv
+    recip        = liftQtyTf Inv
 
 
 -- | The average value of a stock over the given dates

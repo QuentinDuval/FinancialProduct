@@ -20,8 +20,9 @@ import Utils.Syntax
 
 runPayoffTests :: Test
 runPayoffTests = TestList
-    [ tangibleTest, giveTest, scalingTest, scalingFailTest
-    , conditionalTest, allOfTest, bestOfTest, fancyProductTest ]
+    [ tangibleTest, giveTest, scalingTest, scalingOptimTest
+    , scalingFailTest , conditionalTest, allOfTest, allOfOptimTest
+    , partialFixTest, bestOfTest, fancyProductTest ]
 
 
 -- | Fixture
@@ -53,7 +54,7 @@ runPartial PayoffTest{..} = TestCase $ do
     assertEqual   "Dependecies" depends (getDeps payoff)
     checkFixing   "Fixing test" fixed payoff
     checkEvalFail "Consistency" fixed
-    -- TODO: a call to evalKnownFlows that checks against the flow
+    checkEvalWith evalKnownFlows "Known flows" flows payoff
 
 -- TODO: test "shiftObs" as well (and on the tangibles!)
 
@@ -82,6 +83,11 @@ scalingTest = runSuccess baseTest {
     fixed   = recv 15 today "SILV"
 }
 
+scalingOptimTest :: Test
+scalingOptimTest = TestCase $ do
+    assertEqual "Collapsing signs" (send 12 today "SILV") (give (recv 12 today "SILV"))
+    assertEqual "Collapsing const" (recv 12 today "SILV") (scale (cst 2) (recv 6 today "SILV"))
+
 scalingFailTest :: Test
 scalingFailTest = runPartial baseTest {
     payoff  = scale (rate "UNKNOWN" today + stock "USD" today) (recv 1 today "SILV"),
@@ -106,6 +112,22 @@ allOfTest = runSuccess baseTest {
     depends = mempty { stockDeps = [("GOLD", today), ("SILV", today)] },
     flows   = [Flow 15 today (Stock "GOLD"), Flow (-11) today (Stock "SILV")],
     fixed   = allOf [recv 15 today "GOLD", send 11 today "SILV"]
+}
+
+allOfOptimTest :: Test
+allOfOptimTest = TestCase $ do
+    assertEqual "Empty + AllOf" (send 1 today "USD") (allOf [Empty, send 1 today "USD", Empty])
+    assertEqual "Several AllOf" (allOf [send 1 today "USD", recv 1 today "EUR",    send 1 today "USD"])
+                                (allOf [send 1 today "USD", recv 1 today "EUR"] <> send 1 today "USD")
+
+partialFixTest :: Test
+partialFixTest = runPartial baseTest {
+    payoff  = allOf [ scale (stock "USD" today) (recv 1 today "GOLD")
+                    , scale (stock "BAD" today) (send 1 today "SILV") ],
+    depends = mempty { stockDeps = [("USD", today), ("BAD", today)] },
+    flows   = [Flow 1 today (Stock "GOLD")],
+    fixed   = allOf [ recv 1 today "GOLD"
+                    , scale (stock "BAD" today) (send 1 today "SILV") ]
 }
 
 -- TODO: fails miserably:

@@ -4,6 +4,8 @@ module Observable.Quantity (
     QtyTransf(..),
     QtyOp(..),
     ObsQuantity(..),
+    applyQtyTransf,
+    applyQtyOp,
 ) where
 
 import Control.Applicative
@@ -55,7 +57,7 @@ instance IObservable ObsQuantity Double where
     shiftObs q@CombineQty{..}  shifter = q { quantities = fmap (`shiftObs` shifter) quantities }
 
 
--- | Private
+-- | Operation effect
 
 applyQtyTransf :: QtyTransf -> Double -> Double
 applyQtyTransf Neg   = negate

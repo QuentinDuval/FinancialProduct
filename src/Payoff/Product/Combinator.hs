@@ -36,6 +36,9 @@ cascadingBestsOf products shiftedEvals s t =
 withEvalOn :: (Stock -> FinDate -> b) -> (Stock, FinDate) -> b
 withEvalOn = uncurry
 
+plus :: FinProduct -> FinProduct -> FinProduct
+plus a b = allOf [a, b]
+
 
 -- | Aliases
 

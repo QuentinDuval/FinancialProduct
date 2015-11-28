@@ -26,3 +26,6 @@ checkEvalFail str expression =
         testFct obsValue = runIdentity $ resultWithEnv mdsAccess (evalObs obsValue)
     in assertEqual str (Fail "No results found") (testFct expression)
 
+runFixing :: (IObservable a b) => a -> a
+runFixing obsValue = r
+    where (Done r) = runIdentity $ resultWithEnv (testMdsAccess mds) (fixing obsValue)

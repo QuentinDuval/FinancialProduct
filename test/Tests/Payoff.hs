@@ -22,7 +22,8 @@ runPayoffTests :: Test
 runPayoffTests = TestList
     [ tangibleTest, giveTest, scalingTest, scalingOptimTest
     , scalingFailTest , conditionalTest, allOfTest, allOfOptimTest
-    , partialFixTest, bestOfTest, fancyProductTest ]
+    , partialFixTest, shiftTangibleTest, shiftPartialTest
+    , bestOfTest, fancyProductTest ]
 
 
 -- | Fixture
@@ -35,8 +36,10 @@ data PayoffTest = PayoffTest {
     flows    :: [Flow]
 } deriving (Show, Eq, Ord)
 
-today :: FinDate
-today = fromGregorian 2015 22 21
+today, tomorrow :: FinDate
+today    = fromGregorian 2015 22 21
+tomorrow = addDay today 1
+
 
 baseTest :: PayoffTest
 baseTest = PayoffTest { testDate = today, payoff = Empty, depends = mempty, fixed = Empty, flows = mempty }
@@ -55,8 +58,6 @@ runPartial PayoffTest{..} = TestCase $ do
     checkFixing   "Fixing test" fixed payoff
     checkEvalFail "Consistency" fixed
     checkEvalWith evalKnownFlows "Known flows" flows payoff
-
--- TODO: test "shiftObs" as well (and on the tangibles!)
 
 
 -- | Test cases
@@ -130,6 +131,24 @@ partialFixTest = runPartial baseTest {
                     , scale (stock "BAD" today) (send 1 today "SILV") ]
 }
 
+shiftTangibleTest :: Test
+shiftTangibleTest = runSuccess baseTest {
+    payoff  = recv 12 today "SILV" `shiftObs` 1,
+    flows   = [Flow 12 tomorrow (Stock "SILV")],
+    fixed   = recv 12 tomorrow "SILV"
+}
+
+shiftPartialTest :: Test
+shiftPartialTest =
+    let p t = allOf [ scale (stock "USD" t) (recv 1 t "GOLD")
+                    , scale (stock "BAD" t) (send 1 t "SILV") ]
+    in runPartial baseTest {
+        payoff  = p today `shiftObs` 1,
+        depends = mempty { stockDeps = [("USD", tomorrow), ("BAD", tomorrow)] },
+        flows   = [Flow 1 tomorrow (Stock "GOLD")],
+        fixed   = runFixing (p tomorrow)
+    }
+
 -- TODO: fails miserably:
 -- Best of dependencies does not work... you need the deps of all tangibles + the eval currency as well
 
@@ -142,6 +161,7 @@ bestOfTest = runSuccess baseTest {
 }
 
 -- TODO: add bestOf with proxy at different dates
+-- TODO: add shiftObs on bestOf
 -- Dependencies are even harder to get right
 
 fancyProduct :: FinDate -> FinProduct

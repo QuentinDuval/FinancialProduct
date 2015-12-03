@@ -36,11 +36,6 @@ data PayoffTest = PayoffTest {
     flows    :: [Flow]
 } deriving (Show, Eq, Ord)
 
-today, tomorrow :: FinDate
-today    = fromGregorian 2015 22 21
-tomorrow = addDay today 1
-
-
 baseTest :: PayoffTest
 baseTest = PayoffTest { testDate = today, payoff = Empty, depends = mempty, fixed = Empty, flows = mempty }
 
@@ -164,8 +159,23 @@ bestOfTest = runSuccess baseTest {
 -- TODO: add shiftObs on bestOf
 -- Dependencies are even harder to get right
 
-fancyProduct :: FinDate -> FinProduct
-fancyProduct futureDate =
+condProduct :: FinDate -> FinProduct
+condProduct futureDate =
+    if stock "EUR" futureDate .>. stock "EUR" today
+        then recv 1 futureDate "EUR"
+        else send 2 futureDate "USD"
+
+withPremium :: FinDate -> FinProduct
+withPremium futureDate =
+    allOf [
+        recv 1 today "EUR",
+        if stock "EUR" futureDate .>. stock "EUR" today
+            then recv 1 futureDate "EUR"
+            else send 2 futureDate "USD"
+    ]
+
+withScaling :: FinDate -> FinProduct
+withScaling futureDate =
     scale (cst 5 + stock "GOLD" today / stock "USD" today) $
         allOf [
             recv 1 today "EUR",
@@ -174,8 +184,8 @@ fancyProduct futureDate =
                 else send 2 futureDate "USD"
         ]
 
-fixedFancyProduct :: FinDate -> FinProduct
-fixedFancyProduct futureDate =
+withFixing :: FinDate -> FinProduct
+withFixing futureDate =
     scale (cst 20) $
         allOf [
             recv 1 today "EUR",
@@ -186,10 +196,10 @@ fancyProductTest :: Test
 fancyProductTest =
     let futureDate = today `addDay` 10
     in runSuccess baseTest {
-        payoff = fancyProduct futureDate,
+        payoff = withScaling futureDate,
         depends = mempty { stockDeps = [("EUR", futureDate),("EUR", today),("GOLD", today),("USD", today)]},
         flows = [Flow 20 today (Stock "EUR"), Flow 20 futureDate (Stock "EUR")],
-        fixed = fixedFancyProduct futureDate
+        fixed = withFixing futureDate
     }
 
 

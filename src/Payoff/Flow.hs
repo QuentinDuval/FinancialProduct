@@ -17,10 +17,15 @@ data Flow = Flow
 
 instance Show Flow where
     show Flow{ flow = f, date = d, flowInstr = (Stock s) } =
-        "Flow { value = "   ++ showFFloat (Just 2) f ""
+        "Flow { value = "   ++ show f --showFFloat (Just 3) f ""
         ++ ", date = "      ++ show d
         ++ ", instr = "     ++ show s
         ++ " }"
+
+-- TODO: add constructor to truncate the value?
+
+roundFlow :: Int -> Flow -> Flow
+roundFlow n = overFlow (\f -> fromIntegral (round (f * 10^n)) / 10^n)
 
 
 -- | Utils function

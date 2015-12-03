@@ -25,7 +25,7 @@ quantityFixing :: FinDate -> Test
 quantityFixing t = TestCase $ do
     checkFixing "Constant quantity" (CstQuantity 1.0)                 (cst 1.0)
     checkFixing "Rate quantity"     (CstQuantity 0.05)                (rate "EURIBOR3M" t)
-    checkFixing "Moving stock"      (CstQuantity 1.0133461247168631)  (stock "EUR" t)
+    checkFixing "Moving stock"      (CstQuantity 1.1)                 (stock "EUR" t)
     checkFixing "Combining const"   (CstQuantity 3.1)                 (cst 2 * stock "USD" t + cst 1.1)
     checkFixing "Combining vars"    (CstQuantity 0.05)                (rate "EURIBOR3M" t * stock "USD" t)
     checkFixing "Unknown rate"      (RateObs "UNKNOWN" t)             (rate "UNKNOWN" t)

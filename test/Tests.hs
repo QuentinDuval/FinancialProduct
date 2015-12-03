@@ -4,11 +4,15 @@ module Tests (
 
 import Test.HUnit
 import Tests.Flow
+import Tests.Listed.Bond
 import Tests.Observable
 import Tests.Payoff
 
 
 runAllTests :: IO Counts
 runAllTests = runTestTT $ TestList
-    [ runObservableTests, runFlowTests, runPayoffTests ]
+    [ TestLabel "Observable"    runObservableTests
+    , TestLabel "Flow"          runFlowTests
+    , TestLabel "Payoff"        runPayoffTests
+    , TestLabel "Listed.Bond"   runBondTests ]
 

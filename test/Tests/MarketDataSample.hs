@@ -16,10 +16,12 @@ tomorrow = addDay today 1
 
 mds :: TestMarketData
 mds = initMds
-    [(Stock "GOLD"     , const 15.0)
-    ,(Stock "SILV"     , const 11.0)
-    ,(Stock "USD"      , const 1.0)
-    ,(Stock "EUR"      , \t -> 1.1 + 0.01 * fromIntegral (t `diffDays` today) )]
-    [(Rate "EURIBOR3M" , const 0.05)
-    ,(Rate "LIBOR"     , const 0.06)]
+    [(Stock "GOLD"     , const (pure 15.0))
+    ,(Stock "SILV"     , const (pure 11.0))
+    ,(Stock "BNP"      , \t -> pure $ 100 + fromIntegral (t `diffDays` today))
+    ,(Stock "BMW"      , \t -> if (t `diffDays` today > 3) then pure 100 else Nothing)
+    ,(Stock "USD"      , const (pure 1.0))
+    ,(Stock "EUR"      , \t -> pure $ 1.1 + 0.01 * fromIntegral (t `diffDays` today) )]
+    [(Rate "EURIBOR3M" , const (pure 0.05))
+    ,(Rate "LIBOR"     , const (pure 0.06))]
 

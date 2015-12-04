@@ -10,6 +10,7 @@ module Eval.Monad (
 import Control.Applicative
 import Control.Arrow
 import qualified Data.Map as M
+import Eval.Class
 import Eval.MarketData
 import Eval.Result
 import Utils.Monad
@@ -78,15 +79,15 @@ instance (Monad m) => Alternative (EvalProd m) where
 
 -- | Wrapped access to the monad logic
 
-getStock :: (Monad m) => String -> FinDate -> EvalProd m Double
-getStock s t = EvalProd $ \env -> do
-    (res, newAccess) <- retrieve (stockAccess env) (Stock s) t
-    pure (res, env { stockAccess = newAccess })
+instance IMonadEval EvalProd where
 
-getRate :: (Monad m) => String -> FinDate -> EvalProd m Double
-getRate s t = EvalProd $ \env -> do
-    (res, newAccess) <- retrieve (rateAccess env) (Rate s) t
-    pure (res, env { rateAccess = newAccess })
+    getStock s t = EvalProd $ \env -> do
+        (res, newAccess) <- retrieve (stockAccess env) (Stock s) t
+        pure (res, env { stockAccess = newAccess })
+
+    getRate s t = EvalProd $ \env -> do
+        (res, newAccess) <- retrieve (rateAccess env) (Rate s) t
+        pure (res, env { rateAccess = newAccess })
 
 
 -- | Private

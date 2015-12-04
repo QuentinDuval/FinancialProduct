@@ -13,8 +13,9 @@ import Utils.Monad
 import Utils.Time
 
 
+type EvalGap = Shifter
 
-asianOption :: SimpleOption -> Shifter -> FinDate -> FinProduct
+asianOption :: SimpleOption -> EvalGap -> FinDate -> FinProduct
 asianOption (SimpleOption OptionHeader{..} OptionBody{..}) evalGap t1
     = premium <> opt
     where

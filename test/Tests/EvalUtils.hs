@@ -24,7 +24,7 @@ checkEvalFail :: (IObservable a b, Eq b, Show b) => String -> a -> Assertion
 checkEvalFail str expression =
     let mdsAccess = testMdsAccess mds
         testFct obsValue = runIdentity $ resultWithEnv mdsAccess (evalObs obsValue)
-    in assertEqual str (Fail "No results found") (testFct expression)
+    in assertEqual str missingMarketData (testFct expression)
 
 runFixing :: (IObservable a b) => a -> a
 runFixing obsValue = r

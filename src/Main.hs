@@ -35,46 +35,16 @@ testP1 t =
 testP2 :: FinDate -> FinProduct
 testP2 t = scale (stock "UNKNOWN" t) (recv 1 t "USD") <> testP1 t
 
-bond :: (FinDate -> ObsQuantity) -> FinDate -> FinProduct
-bond couponRate t = buyBond bondInfo periods
-    where
-        periods  = PeriodInfo { startDate = t, period = 10,      periodCount = 3 }
-        bondInfo = BondInfo   { nominal = 10,  currency = "EUR", couponRate = couponRate }
-
-bond1, bond2 :: FinDate -> FinProduct
-bond1   = bond $ (+) <$> rate "EURIBOR3M" <*> rate "LIBOR"
-bond2 t = bond (const $ cst 0.05 * stockRate "EUR" "USD" t) t
-
-optionProducts :: FinDate -> [FinProduct]
-optionProducts t = [
-        europeanOption  optInfo,
-        asianOption     optInfo 1,
-        bestOfOption    compositeOpt] <*> [t]
-    where
-        optHeader = OptionHeader { maturity = 5, premium = recv 5 t "USD" }
-        optBody1 = OptionBody { strike = 10, quantity  = cst 27, buyInstr = "GOLD", sellInstr = "USD" }
-        optBody2 = OptionBody { strike = 10, quantity  = cst 27, buyInstr = "GOLD", sellInstr = "EUR" }
-        optInfo = SimpleOption optHeader optBody1
-        compositeOpt = CompositeOption optHeader [optBody1, optBody2]
-
 
 -- | Two test market data sets
 
-mds1 :: FinDate -> TestMarketData
-mds1 t = initMds    [(Stock "GOLD"     , const 15.8)
-                    ,(Stock "SILV"     , const 11.3)
-                    ,(Stock "USD"      , const 1.0)
-                    ,(Stock "EUR"      , \t -> 1.1 + 0.1 * sin (toDayCount t) )]
-                    [(Rate "EURIBOR3M" , const 0.05)
-                    ,(Rate "LIBOR"     , const 0.06)]
-
-mds2 :: FinDate -> TestMarketData
-mds2 t = initMds    [(Stock "GOLD"     , const 1.58)
-                    ,(Stock "SILV"     , const 17.3)
-                    ,(Stock "USD"      , const 1.0)
-                    ,(Stock "EUR"      , \t -> 0.9  + 0.1 * sin (toDayCount t) )]
-                    [(Rate "EURIBOR3M" , \t -> 0.05 + 0.01 * sin (toDayCount t / 10) )
-                    ,(Rate "LIBOR"     , \t -> 0.06 + 0.01 * cos (toDayCount t / 12) )]
+mds :: FinDate -> TestMarketData
+mds t = initMds [(Stock "GOLD"     , const (pure 15.8))
+                ,(Stock "SILV"     , const (pure 11.3))
+                ,(Stock "USD"      , const (pure 1.0))
+                ,(Stock "EUR"      , \t -> pure (1.1 + 0.1 * sin (toDayCount t)) )]
+                [(Rate "EURIBOR3M" , const (pure 0.05))
+                ,(Rate "LIBOR"     , const (pure 0.06))]
 
 
 -- TODO: Write a small main loop that reads the market data as input, then ask for pricing of products?
@@ -96,16 +66,14 @@ main = do
     putStrLn "\nTest of evaluation of products:"
     let testEval prod mds f = runIdentity $ resultWithEnv (testMdsAccess mds) (f prod)
     mapM_ print $ do
-        prod <- ([testP1, testP2, bond1, bond2] <*> [t]) ++ optionProducts t
-        mds  <- [mds1, mds2] <*> [t]
+        prod <- [testP1, testP2] <*> [t]
         f <- [evalObs, evalKnownFlows]
-        return $ testEval prod mds f
+        return $ testEval prod (mds t) f
 
     putStrLn "\nTest of fixing of products:"
     let testFix prod mds = runIdentity $ resultWithEnv (testMdsAccess mds) (fixing prod)
     mapM_ print $ do
         prod <- [testP1, testP2] <*> [t]
-        mds  <- [mds1, mds2] <*> [t]
-        return $ testFix prod mds
+        return $ testFix prod (mds t)
 
 

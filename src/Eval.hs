@@ -1,5 +1,6 @@
-module Eval (module AllEvals) where
+module Eval (module Exports) where
 
-import Eval.MarketData as AllEvals
-import Eval.Monad as AllEvals
-import Eval.Result as AllEvals
+import Eval.Class       as Exports
+import Eval.MarketData  as Exports
+import Eval.Monad       as Exports
+import Eval.Result      as Exports

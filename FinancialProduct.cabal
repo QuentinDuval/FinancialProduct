@@ -18,6 +18,7 @@ executable FinancialProduct
     hs-source-dirs: src
     other-modules:
         Eval
+        Eval.Class
         Eval.MarketData
         Eval.Monad
         Eval.Result
@@ -65,7 +66,10 @@ test-suite test-FinancialProduct
         Tests
         Tests.EvalUtils
         Tests.Flow
+        Tests.Listed.AsianOption
+        Tests.Listed.BestOfOption
         Tests.Listed.Bond
+        Tests.Listed.EuropeanOption
         Tests.MarketDataSample
         Tests.Observable
         Tests.Payoff

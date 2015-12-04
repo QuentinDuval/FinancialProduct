@@ -20,10 +20,10 @@ runFlowTests = TestList [ compoundTest, convertTest ]
 
 mds :: FinDate -> TestMarketData
 mds today = initMds
-    [(Stock "USD"      , \t -> 10.0 + fromIntegral (t `diffDays` today))
-    ,(Stock "EUR"      , \t -> 10.0 - fromIntegral (t `diffDays` today))
-    ,(Stock "CHF"      , const 10.0)]
-    [(Rate "EURIBOR3M" , const 0.05)]
+    [(Stock "USD"      , \t -> pure $ 10.0 + fromIntegral (t `diffDays` today))
+    ,(Stock "EUR"      , \t -> pure $ 10.0 - fromIntegral (t `diffDays` today))
+    ,(Stock "CHF"      , const (pure 10.0))]
+    [(Rate "EURIBOR3M" , const (pure 0.05))]
 
 
 -- | Test cases

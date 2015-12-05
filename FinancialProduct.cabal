@@ -19,8 +19,8 @@ executable FinancialProduct
     other-modules:
         Eval
         Eval.Class
+        Eval.EvalProd
         Eval.MarketData
-        Eval.Monad
         Eval.Result
         Listed.Bond
         Listed.Option

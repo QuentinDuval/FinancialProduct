@@ -21,7 +21,9 @@ import Utils.Time
 -- | Environment of evaluation of financial product
 
 -- TODO - Add a new env with dependencies resolving at the beginning
--- TODO - Add some way to accumulate requests in the functor + applicative (and access should take list?)
+-- This might be done from the outside if we provide a "bulk fetch"
+-- then the client algorithm might choose this from the outside
+
 
 data Cached m key res = Cached {
     access :: Access m key res,
@@ -46,7 +48,6 @@ data EvalProd m a = EvalProd {
 
 resultWithEnv :: (Monad m) => EvalEnv m -> EvalProd m a -> m (Result a)
 resultWithEnv env m = fst <$> runEvalProd m env
-
 
 instance (Monad m) => Functor (EvalProd m) where
     fmap f m = EvalProd $ \env -> first (fmap f) <$> runEvalProd m env

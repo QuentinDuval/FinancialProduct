@@ -36,7 +36,7 @@ overFlow modifier f = f { flow = modifier (flow f) }
 
 -- | Convert a flow from one instrument to another
 
-convert :: (Monad m) => Stock -> Flow -> EvalProd m Flow
+convert :: (IMarketEval m) => Stock -> Flow -> m Flow
 convert newInstr f@Flow{..} = do
     r <- evalStockRate (flowInstr, date) (newInstr, date)
     pure $ f { flow = r * flow, flowInstr = newInstr }
@@ -44,7 +44,7 @@ convert newInstr f@Flow{..} = do
 
 -- | Evaluate the value of a flow at a given date, taking into account the financing rate
 
-compound :: (Monad m) => FinDate -> Flow -> EvalProd m Flow
+compound :: (IMarketEval m) => FinDate -> Flow -> m Flow
 compound newDate f@Flow{..} = do
     r <- evalStockRate (flowInstr, newDate) (flowInstr, date)
     pure $ f { flow = r * flow, date = newDate }
@@ -52,6 +52,6 @@ compound newDate f@Flow{..} = do
 
 -- | Private
 
-evalStockRate :: (Monad m) => (Stock, FinDate) -> (Stock, FinDate) -> EvalProd m Double
+evalStockRate :: (IMarketEval m) => (Stock, FinDate) -> (Stock, FinDate) -> m Double
 evalStockRate (s1, t1) (s2, t2) = evalObs (stock (stockLabel s1) t1 / stock (stockLabel s2) t2)
 

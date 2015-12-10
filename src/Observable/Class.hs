@@ -12,13 +12,13 @@ import Utils.Time
 -- | Class for the observables and the operations on them
 
 class IFixable a where
-    getDeps  ::            a -> ObsDependencies
-    fixing   :: Monad m => a -> EvalProd m a
+    getDeps  ::                  a -> ObsDependencies
+    fixing   :: IMarketEval m => a -> m a
 
 class (IFixable a) => IObservable a b | a -> b where -- TODO: think about adding cst in it (but beware of type wrond deduction)
-    evalObs  :: Monad m => a -> EvalProd m b
-    unwrap   ::            a -> Maybe b
-    shiftObs ::            a -> Shifter -> a
+    evalObs  :: IMarketEval m => a -> m b
+    unwrap   ::                  a -> Maybe b
+    shiftObs ::                  a -> Shifter -> a
 
 
 -- | Utils for observable values

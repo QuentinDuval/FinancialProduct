@@ -18,8 +18,8 @@ executable FinancialProduct
     hs-source-dirs: src
     other-modules:
         Eval
+        Eval.CachedEval
         Eval.Class
-        Eval.EvalProd
         Eval.MarketData
         Eval.Result
         Listed.Bond

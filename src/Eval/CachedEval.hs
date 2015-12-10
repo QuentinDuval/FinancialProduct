@@ -1,7 +1,7 @@
-module Eval.EvalProd (
+module Eval.CachedEval (
     EvalEnv,
     newEnv,
-    EvalProd,
+    CachedEval,
     resultWithEnv,
     getStock,
     getRate,
@@ -41,52 +41,53 @@ newEnv s = EvalEnv (toCached $ stockValue s) (toCached $ rateValue s)
 
 
 -- | Abstract:
--- | Evaluation monad for the financial product
+-- | Evaluation monad with access to the market data
 
-data EvalProd m a = EvalProd {
-    runEvalProd :: EvalEnv m -> m (Result a, EvalEnv m) }
+data CachedEval m a = CachedEval {
+    runCachedEval :: EvalEnv m -> m (Result a, EvalEnv m)
+}
 
-resultWithEnv :: (Monad m) => EvalEnv m -> EvalProd m a -> m (Result a)
-resultWithEnv env m = fst <$> runEvalProd m env
+resultWithEnv :: (Monad m) => EvalEnv m -> CachedEval m a -> m (Result a)
+resultWithEnv env m = fst <$> runCachedEval m env
 
-instance (Monad m) => Functor (EvalProd m) where
-    fmap f m = EvalProd $ \env -> first (fmap f) <$> runEvalProd m env
+instance (Monad m) => Functor (CachedEval m) where
+    fmap f m = CachedEval $ \env -> first (fmap f) <$> runCachedEval m env
 
-instance (Monad m) => Applicative (EvalProd m) where
-    pure a  = EvalProd $ \env -> pure (Done a, env)
-    m <*> a = EvalProd $ \env1 -> do
-                (f', env2) <- runEvalProd m env1
+instance (Monad m) => Applicative (CachedEval m) where
+    pure a  = CachedEval $ \env -> pure (Done a, env)
+    m <*> a = CachedEval $ \env1 -> do
+                (f', env2) <- runCachedEval m env1
                 case f' of
                     Fail s -> pure (Fail s, env2)
-                    Done f -> runEvalProd (fmap f a) env2
+                    Done f -> runCachedEval (fmap f a) env2
 
-instance (Monad m) => Monad (EvalProd m) where
+instance (Monad m) => Monad (CachedEval m) where
     return  = pure
     (>>)    = (*>)
-    m >>= f = EvalProd $ \env -> do
-                (a', env2) <- runEvalProd m env
+    m >>= f = CachedEval $ \env -> do
+                (a', env2) <- runCachedEval m env
                 case a' of
-                    Done a -> runEvalProd (f a) env
+                    Done a -> runCachedEval (f a) env
                     Fail s -> pure (Fail s, env2)
 
-instance (Monad m) => Alternative (EvalProd m) where
-    empty   = EvalProd $ \env -> pure (Fail "empty", env)
-    a <|> b = EvalProd $ \env -> do
-                (a', env2) <- runEvalProd a env
+instance (Monad m) => Alternative (CachedEval m) where
+    empty   = CachedEval $ \env -> pure (Fail "empty", env)
+    a <|> b = CachedEval $ \env -> do
+                (a', env2) <- runCachedEval a env
                 case a' of
                     Done a -> pure (Done a, env2)
-                    Fail s -> runEvalProd b env2 -- Profit of the caching of the first
+                    Fail s -> runCachedEval b env2 -- Profit of the caching of the first
 
 
 -- | Wrapped access to the monad logic
 
-instance IMonadEval EvalProd where
+instance (Monad m) => IMarketEval (CachedEval m) where
 
-    getStock s t = EvalProd $ \env -> do
+    getStock s t = CachedEval $ \env -> do
         (res, newAccess) <- retrieve (stockAccess env) (Stock s) t
         pure (res, env { stockAccess = newAccess })
 
-    getRate s t = EvalProd $ \env -> do
+    getRate s t = CachedEval $ \env -> do
         (res, newAccess) <- retrieve (rateAccess env) (Rate s) t
         pure (res, env { rateAccess = newAccess })
 
@@ -102,5 +103,6 @@ retrieve cached key t =
             let newCache = M.insert (key, t) res (cache cached)
             let newCached = cached { cache = newCache }
             pure (res, newCached)
+
 
 

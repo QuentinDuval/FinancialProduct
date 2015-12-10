@@ -8,7 +8,7 @@ import Tests.MarketDataSample
 
 
 
-checkEvalWith :: (Eq b, Show b) => (a -> EvalProd Identity b) -> String -> b -> a -> Assertion
+checkEvalWith :: (Eq b, Show b) => (a -> CachedEval Identity b) -> String -> b -> a -> Assertion
 checkEvalWith evalObs str expected expression =
     let mdsAccess = testMdsAccess mds
         testFct obsValue = runIdentity $ resultWithEnv mdsAccess (evalObs obsValue)

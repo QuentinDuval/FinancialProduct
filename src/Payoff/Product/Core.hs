@@ -99,7 +99,7 @@ instance IObservable FinProduct [Flow] where
 
 -- | Eval know flows only
 
-evalKnownFlows :: (Monad m) => FinProduct -> EvalProd m [Flow]
+evalKnownFlows :: (IMarketEval m) => FinProduct -> m [Flow]
 evalKnownFlows AllOf{..}       = concatMapM evalKnownFlows subProducts
 evalKnownFlows FirstOf{..}     = (findFirstProduct predicates subProducts >>= evalKnownFlows) <|> pure []
 evalKnownFlows p               = evalObs p <|> pure []
@@ -107,13 +107,13 @@ evalKnownFlows p               = evalObs p <|> pure []
 
 -- | Private
 
-findFirstProduct :: (Monad m) => [ObsPredicate] -> [FinProduct] -> EvalProd m FinProduct
+findFirstProduct :: (IMarketEval m) => [ObsPredicate] -> [FinProduct] -> m FinProduct
 findFirstProduct cs ps = fromMaybe Empty <$> findFirst cs ps
 
-findFirstProductFixing :: (Monad m) => [ObsPredicate] -> [FinProduct] -> EvalProd m FinProduct
+findFirstProductFixing :: (IMarketEval m) => [ObsPredicate] -> [FinProduct] -> m FinProduct
 findFirstProductFixing cs ps = fromMaybe Empty <$> findFirstFixing cs ps (flip FirstOf)
 
-findBest :: (Monad m) => BestOfParams -> [FinProduct] -> EvalProd m (FinProduct, [Flow])
+findBest :: (IMarketEval m) => BestOfParams -> [FinProduct] -> m (FinProduct, [Flow])
 findBest params products = first allOf <$> findBests params products
 
 

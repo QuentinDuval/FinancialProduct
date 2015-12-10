@@ -40,14 +40,14 @@ getBestOfDeps params products =
         -- TODO list all tangibles and shift them as well!
         mconcat (fmap depsOfParam params) ]
 
-fixingBestOf :: (Monad m, IObservable p [Flow]) => BestOfParams -> [p] -> EvalProd m (BestOfParams, [p])
+fixingBestOf :: (IMarketEval m, IObservable p [Flow]) => BestOfParams -> [p] -> m (BestOfParams, [p])
 fixingBestOf [] subProducts = pure ([], subProducts)
 fixingBestOf bs subProducts =
     let fixed = fst <$> findBestWith (head bs) subProducts
         recur = fixingBestOf (tail bs) =<< fixed
     in recur <|> pure (bs, subProducts)
 
-findBests :: (Monad m, IObservable p [Flow]) => BestOfParams -> [p] -> EvalProd m ([p], [Flow])
+findBests :: (IMarketEval m, IObservable p [Flow]) => BestOfParams -> [p] -> m ([p], [Flow])
 findBests [b] subProducts = findBestWith b subProducts -- TODO - how to handle the empty case?
 findBests bs subProducts  = do
     (keptProducts, _) <- findBestWith (head bs) subProducts
@@ -56,13 +56,13 @@ findBests bs subProducts  = do
 
 -- | Private:
 
-findBestWith :: (Monad m, IObservable p [Flow]) => BestOfParam -> [p] -> EvalProd m ([p], [Flow])
+findBestWith :: (IMarketEval m, IObservable p [Flow]) => BestOfParam -> [p] -> m ([p], [Flow])
 findBestWith params@BestOfParam{..} products =
     let proxies = fmap (`shiftObs` shift) products
         bests = findBestsImpl (evalObs . fst) params (zip proxies products)
     in first (fmap snd) <$> bests
 
-findBestsImpl :: (Monad m) => (p -> EvalProd m [Flow]) -> BestOfParam -> [p] -> EvalProd m ([p], [Flow])
+findBestsImpl :: (IMarketEval m) => (p -> m [Flow]) -> BestOfParam -> [p] -> m ([p], [Flow])
 findBestsImpl evalP BestOfParam{..} subProducts = do
     evals <- forM subProducts $ \p -> do
         flows <- evalP p

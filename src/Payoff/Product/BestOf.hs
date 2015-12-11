@@ -1,7 +1,14 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TupleSections #-}
-module Payoff.Product.BestOf where
+module Payoff.Product.BestOf (
+    BestOfParam(..),
+    BestOfParams,
+    shiftRefDate,
+    getBestOfDeps,
+    fixingBestOf,
+    findBests,
+) where
 
 import Control.Applicative
 import Control.Arrow

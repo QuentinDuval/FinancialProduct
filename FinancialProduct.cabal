@@ -21,6 +21,7 @@ executable FinancialProduct
         Eval.CachedEval
         Eval.Class
         Eval.MarketData
+        Eval.NoCacheEval
         Eval.Result
         Listed.Bond
         Listed.Option

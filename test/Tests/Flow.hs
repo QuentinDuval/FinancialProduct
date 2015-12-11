@@ -56,12 +56,12 @@ convertTest =
 checkCompound :: FinDate -> String -> Flow -> Flow -> Assertion
 checkCompound today str expected flow =
     let mdsAccess    = testMdsAccess (mds today)
-        compoundFlow = runIdentity $ resultWithEnv mdsAccess (compound today flow)
+        compoundFlow = runIdentity $ evalWithCache mdsAccess (compound today flow)
     in assertEqual str (Done expected) compoundFlow
 
 checkConvert :: FinDate -> String -> Stock -> Flow -> Flow -> Assertion
 checkConvert today str stock expected flow =
     let mdsAccess    = testMdsAccess (mds today)
-        compoundFlow = runIdentity $ resultWithEnv mdsAccess (convert stock flow)
+        compoundFlow = runIdentity $ evalWithCache mdsAccess (convert stock flow)
     in assertEqual str (Done expected) compoundFlow
 

@@ -1,10 +1,8 @@
 module Eval.CachedEval (
-    EvalEnv,
-    newEnv,
+    CachedEvalEnv,
+    newCacheEnv,
     CachedEval,
-    resultWithEnv,
-    getStock,
-    getRate,
+    evalWithCache
 ) where
 
 import Control.Applicative
@@ -18,11 +16,10 @@ import Utils.Time
 
 
 -- | Abstract:
--- | Environment of evaluation of financial product
+-- | Environment of evaluation with market data
 
 -- TODO - Add a new env with dependencies resolving at the beginning
--- This might be done from the outside if we provide a "bulk fetch"
--- then the client algorithm might choose this from the outside
+-- TODO - Might make evalWithoutCache and evalWithCache same function (typeclass)
 
 
 data Cached m key res = Cached {
@@ -30,13 +27,13 @@ data Cached m key res = Cached {
     cache  :: M.Map (key, FinDate) (Result res)
 }
 
-data EvalEnv m = EvalEnv {
+data CachedEvalEnv m = CachedEvalEnv {
     stockAccess :: Cached m Stock Double,
     rateAccess  :: Cached m Rate  Double
 }
 
-newEnv :: (MarketDataAccess m a) => a -> EvalEnv m
-newEnv s = EvalEnv (toCached $ stockValue s) (toCached $ rateValue s)
+newCacheEnv :: (MarketDataAccess m a) => a -> CachedEvalEnv m
+newCacheEnv s = CachedEvalEnv (toCached $ stockValue s) (toCached $ rateValue s)
     where toCached a = Cached { access = a, cache = M.empty }
 
 
@@ -44,11 +41,14 @@ newEnv s = EvalEnv (toCached $ stockValue s) (toCached $ rateValue s)
 -- | Evaluation monad with access to the market data
 
 data CachedEval m a = CachedEval {
-    runCachedEval :: EvalEnv m -> m (Result a, EvalEnv m)
+    runCachedEval :: CachedEvalEnv m -> m (Result a, CachedEvalEnv m)
 }
 
-resultWithEnv :: (Monad m) => EvalEnv m -> CachedEval m a -> m (Result a)
-resultWithEnv env m = fst <$> runCachedEval m env
+evalWithCache :: (Monad m) => CachedEvalEnv m -> CachedEval m a -> m (Result a)
+evalWithCache env m = fst <$> runCachedEval m env
+
+
+-- | Instance of Monad
 
 instance (Monad m) => Functor (CachedEval m) where
     fmap f m = CachedEval $ \env -> first (fmap f) <$> runCachedEval m env
@@ -67,19 +67,19 @@ instance (Monad m) => Monad (CachedEval m) where
     m >>= f = CachedEval $ \env -> do
                 (a', env2) <- runCachedEval m env
                 case a' of
-                    Done a -> runCachedEval (f a) env
                     Fail s -> pure (Fail s, env2)
+                    Done a -> runCachedEval (f a) env
 
 instance (Monad m) => Alternative (CachedEval m) where
     empty   = CachedEval $ \env -> pure (Fail "empty", env)
     a <|> b = CachedEval $ \env -> do
                 (a', env2) <- runCachedEval a env
                 case a' of
-                    Done a -> pure (Done a, env2)
                     Fail s -> runCachedEval b env2 -- Profit of the caching of the first
+                    Done a -> pure (Done a, env2)
 
 
--- | Wrapped access to the monad logic
+-- | Instance of IMarketEval
 
 instance (Monad m) => IMarketEval (CachedEval m) where
 
@@ -92,7 +92,7 @@ instance (Monad m) => IMarketEval (CachedEval m) where
         pure (res, env { rateAccess = newAccess })
 
 
--- | Private
+-- | Private (cache access)
 
 retrieve :: (Monad m, Ord key) => Cached m key res -> key -> FinDate -> m (Result res, Cached m key res)
 retrieve cached key t =

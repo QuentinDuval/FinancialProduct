@@ -1,5 +1,11 @@
 {-# LANGUAGE RecordWildCards #-}
-module Payoff.Flow where
+module Payoff.Flow (
+    Flow(..),
+    overFlow,
+    roundFlow,
+    convert,
+    compound,
+) where
 
 import Eval
 import Numeric
@@ -22,16 +28,14 @@ instance Show Flow where
         ++ ", instr = "     ++ show s
         ++ " }"
 
--- TODO: add constructor to truncate the value?
-
-roundFlow :: Int -> Flow -> Flow
-roundFlow n = overFlow (\f -> fromIntegral (round (f * 10^n)) / 10^n)
-
 
 -- | Utils function
 
 overFlow :: (Double -> Double) -> Flow -> Flow
 overFlow modifier f = f { flow = modifier (flow f) }
+
+roundFlow :: Int -> Flow -> Flow
+roundFlow n = overFlow (\f -> fromIntegral (round (f * 10^n)) / 10^n)
 
 
 -- | Convert a flow from one instrument to another

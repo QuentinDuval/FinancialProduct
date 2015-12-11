@@ -20,8 +20,8 @@ instance MarketDataAccess Identity TestMarketData where
     stockValue mds key t = pure $ findInMap (stockMap mds) key t
     rateValue  mds key t = pure $ findInMap (rateMap  mds) key t
 
-testMdsAccess :: TestMarketData -> EvalEnv Identity
-testMdsAccess = newEnv
+testMdsAccess :: TestMarketData -> CachedEvalEnv Identity
+testMdsAccess = newCacheEnv
 
 
 -- | Helpers to construct a market data set

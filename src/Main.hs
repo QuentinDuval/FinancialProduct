@@ -50,6 +50,7 @@ mds t = initMds [(Stock "GOLD"     , const (pure 15.8))
 -- TODO: Write a small main loop that reads the market data as input, then ask for pricing of products?
 --       And give some example functions to show the things.
 -- TODO: Try to represent the notion of rights? (rights to buy, rights to dividend, etc.)
+-- TODO: Try to represent trades: payoff + parties = ptf or ctp, and do the validation with tag trick
 -- TODO: Make it easy to do simulation of flows
 -- TODO: Persist the products with (Show / Read) => plug that in the main
 -- TODO: Persist with JSON: https://www.fpcomplete.com/school/starting-with-haskell/libraries-and-frameworks/text-manipulation/json
@@ -64,14 +65,14 @@ main = do
     print (testP1 t)
 
     putStrLn "\nTest of evaluation of products:"
-    let testEval prod mds f = runIdentity $ resultWithEnv (testMdsAccess mds) (f prod)
+    let testEval prod mds f = runIdentity $ evalWithCache (testMdsAccess mds) (f prod)
     mapM_ print $ do
         prod <- [testP1, testP2] <*> [t]
         f <- [evalObs, evalKnownFlows]
         return $ testEval prod (mds t) f
 
     putStrLn "\nTest of fixing of products:"
-    let testFix prod mds = runIdentity $ resultWithEnv (testMdsAccess mds) (fixing prod)
+    let testFix prod mds = runIdentity $ evalWithCache (testMdsAccess mds) (fixing prod)
     mapM_ print $ do
         prod <- [testP1, testP2] <*> [t]
         return $ testFix prod (mds t)
